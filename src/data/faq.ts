@@ -1,0 +1,88 @@
+import type { FaqEntry } from "@/types";
+
+export const FAQ_ENTRIES: FaqEntry[] = [
+  {
+    q: "Who can register for TalentQuest?",
+    a: "Anyone aged 13 and above can register. Contestants under 18 will need a parent or legal guardian to co-sign during the live audition. Phase 1 is a public demo, so feel free to test the form.",
+    qAm: "ለታለንት ኩዌስት ማን ሊመዘገብ ይችላል?",
+    aAm: "ከ13 ዓመት እና ከዚያ በላይ የሆነ ማንም ሰው መመዝገብ ይችላል። ከ18 ዓመት በታች የሆኑ ተወዳዳሪዎች በቀጥታ የመጠቆሚያ ሙከራ ጊዜ ወላጅ ወይም ሕጋዊ ጠባቂ ፈርመው ማቅረብ አለባቸው።",
+    tags: ["eligibility", "age", "register"],
+  },
+  {
+    q: "Is registration free?",
+    a: "Phase 1 is fully free — it is a promotional demo. In Phase 2 the live competition may include an entry fee paid via Telebirr (with AdmasPay/Paylib). Any fee will be clearly displayed before payment.",
+    qAm: "መመዝገብ ነፃ ነው ወይ?",
+    aAm: "የመጀመሪያው ምዕራፍ ነፃ ነው። በሁለተኛው ምዕራፍ የቀጥታ ውድድር በቴሌብር ሊከፈል የሚችል አነስተኛ የመመዝገቢያ ክፍያ ሊኖር ይችላል።",
+    tags: ["payment", "telebirr", "fees"],
+  },
+  {
+    q: "What categories can I compete in?",
+    a: "Singing, Dancing, Acting, Comedy, Instruments, and Other Talents (magic, beatbox, acrobatics, spoken word, and more). You may register in only one primary category.",
+    qAm: "በምን ምን ምድቦች መወዳደር እችላለሁ?",
+    aAm: "ዘፈን፣ ጭፈራ፣ ትወና፣ ኮሜዲ፣ የሙዚቃ መሣሪያ፣ እና ሌሎች ችሎታዎች።",
+    tags: ["categories"],
+  },
+  {
+    q: "How do I submit my talent video?",
+    a: "After registering you will see your contestant ID and a profile page. Phase 1 is a demo — actual upload is disabled. In Phase 2 you'll upload directly through the platform (Cloudinary/Mux/S3) with progress tracking.",
+    qAm: "የችሎታ ቪዲዮዬን እንዴት አስገባለሁ?",
+    aAm: "ከመመዝገብ በኋላ የውድድር መታወቂያዎ እና የግል ገጽዎ ይታያል። በምዕራፍ 1 ቪዲዮ ማስገባት የመስቀያ ማሳያ ብቻ ነው።",
+    tags: ["upload", "video", "submission"],
+  },
+  {
+    q: "What is the recommended video length?",
+    a: "Between 60 and 180 seconds. Hook the judges in the first 10 seconds. Cut anything that does not directly showcase your talent.",
+    qAm: "የተመከረው የቪዲዮ ርዝመት ምን ያህል ነው?",
+    aAm: "ከ60 እስከ 180 ሰከንዶች። መጀመሪያ 10 ሰከንዶች ውስጥ የዳኞቹን ትኩረት ይያዙ።",
+    tags: ["video", "duration"],
+  },
+  {
+    q: "What format should I use for my video?",
+    a: "MP4 (H.264) is preferred. MOV and WEBM are also accepted. Aim for 1080p vertical (1080×1920) or horizontal (1920×1080). Maximum file size: 500 MB in Phase 2.",
+    qAm: "ምን ዓይነት የቪዲዮ ፎርማት መጠቀም አለብኝ?",
+    aAm: "MP4 (H.264) የተሻለ ነው። MOV እና WEBM እንዲሁ ተቀባይነት አላቸው።",
+    tags: ["format", "video", "mp4"],
+  },
+  {
+    q: "How will judges score me?",
+    a: "Judges score on five dimensions: Talent (out of 25), Originality (25), Stage Presence (20), Production Quality (15), and Audience Connection (15). Total out of 100. The breakdown will be visible on your profile after each round.",
+    qAm: "ዳኞች እንዴት ይገመግማሉ?",
+    aAm: "ዳኞች በአምስት ዘርፎች ይገመግማሉ - ችሎታ፣ ኦሪጂናሊቲ፣ የመድረክ ሕልውና፣ የምርት ጥራት፣ እና የተመልካች ግንኙነት።",
+    tags: ["judging", "scoring", "rubric"],
+  },
+  {
+    q: "When are the results announced?",
+    a: "Each round closes on a published date. Results are released within 7 days through your profile, the Result Checker page, and an SMS/email notification.",
+    qAm: "ውጤቶች መቼ ይታወጃሉ?",
+    aAm: "እያንዳንዱ ዙር በታወቀ ቀን ይዘጋል። ውጤቶች በ7 ቀናት ውስጥ ይወጣሉ።",
+    tags: ["results", "timeline"],
+  },
+  {
+    q: "Can I edit my registration after submitting?",
+    a: "Yes. From your profile you can update bio, stage name, and contact info until the round closes. Category changes require contacting support.",
+    qAm: "ከመዝገብ በኋላ መረጃዬን ማስተካከል እችላለሁ?",
+    aAm: "አዎ። ከግል ገጽዎ ላይ ባዮ፣ የመድረክ ስም፣ እና የመገናኛ መረጃ ማስተካከል ይችላሉ።",
+    tags: ["account", "edit"],
+  },
+  {
+    q: "Is there a regional or city qualifier?",
+    a: "Phase 2 will include city qualifiers in Addis Ababa, Bahir Dar, Hawassa, Mekelle, Dire Dawa, and Adama, then a national semi-final and live final. Phase 1 displays the bracket as a preview.",
+    qAm: "የክልል ወይም የከተማ ማጣሪያ አለ ወይ?",
+    aAm: "በምዕራፍ 2 ላይ የከተማ ማጣሪያዎች በአዲስ አበባ፣ ባሕር ዳር፣ ሐዋሳ፣ መቀሌ፣ ድሬዳዋ፣ እና አዳማ ይኖራሉ።",
+    tags: ["schedule", "rounds"],
+  },
+  {
+    q: "What happens if my video has copyrighted music?",
+    a: "Cover songs are allowed, but pre-recorded backing tracks must be properly licensed or original. Avoid using full studio masters of commercial songs as your only audio. Live instruments and a cappella are encouraged.",
+    qAm: "በቪዲዮዬ ላይ የሌሎች ሰዎች ሙዚቃ ካለ ምን ይሆናል?",
+    aAm: "የሌላ ዘፋኝ ሥራ ማቅረብ ይፈቀዳል፤ ግን የሙሉ ስቱዲዮ ቅጂ ብቻ መጠቀም አይመከርም።",
+    tags: ["copyright", "music"],
+  },
+  {
+    q: "Is my data safe?",
+    a: "Yes. Phase 1 stores everything only in your browser (localStorage). Phase 2 will use encrypted PostgreSQL, hashed passwords, signed media URLs, and role-based access control. We never share your phone or email with third parties.",
+    qAm: "የእኔ መረጃ ደህንነቱ የተጠበቀ ነው ወይ?",
+    aAm: "አዎ። በምዕራፍ 1 መረጃዎ በብራውዘር ብቻ ነው የሚቀመጠው። በምዕራፍ 2 ሁሉም መረጃ በተመሰጠረ የውሂብ ቋት ውስጥ ይቀመጣል።",
+    tags: ["privacy", "security", "data"],
+  },
+];
