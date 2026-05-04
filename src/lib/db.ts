@@ -5,13 +5,6 @@ import ws from "ws";
 // (and tsx in scripts) doesn't ship a global WebSocket, so we wire `ws`.
 neonConfig.webSocketConstructor = ws;
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error(
-    "DATABASE_URL is not set. Copy .env.example to .env.local and paste your Neon pooled connection string."
-  );
-}
-
 declare global {
   // Reuse one pool across hot reloads in dev.
   // eslint-disable-next-line no-var
@@ -20,10 +13,24 @@ declare global {
   var __tq_migrated: Promise<void> | undefined;
 }
 
-export const pool: Pool =
-  global.__tq_pool ?? new Pool({ connectionString });
-if (process.env.NODE_ENV !== "production") {
-  global.__tq_pool = pool;
+/**
+ * Lazy pool. We don't construct it (or read DATABASE_URL) at module-load
+ * time, because Next.js evaluates route modules during `next build`'s
+ * "Collect page data" phase — sometimes without runtime env vars. Throwing
+ * there breaks the build even though the code only needs the DB at request
+ * time.
+ */
+export function getPool(): Pool {
+  if (global.__tq_pool) return global.__tq_pool;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL is not set. Set it in the host's env (Vercel: Project → Settings → Environment Variables) or copy .env.example to .env.local."
+    );
+  }
+  const p = new Pool({ connectionString });
+  global.__tq_pool = p;
+  return p;
 }
 
 // ─── Query helpers ───────────────────────────────────────────────────────────
@@ -42,7 +49,7 @@ export async function query<T = Record<string, unknown>>(
   params: unknown[] = []
 ): Promise<T[]> {
   await ensureMigrated();
-  const res = await pool.query(toPg(sql), params);
+  const res = await getPool().query(toPg(sql), params);
   return res.rows as T[];
 }
 
@@ -56,7 +63,7 @@ export async function queryOne<T = Record<string, unknown>>(
 
 export async function exec(sql: string, params: unknown[] = []): Promise<void> {
   await ensureMigrated();
-  await pool.query(toPg(sql), params);
+  await getPool().query(toPg(sql), params);
 }
 
 /** Run `fn` inside a single Postgres transaction. Caller can use `q` / `qOne`
@@ -68,7 +75,7 @@ export async function tx<T>(
   }) => Promise<T>
 ): Promise<T> {
   await ensureMigrated();
-  const client: PoolClient = await pool.connect();
+  const client: PoolClient = await getPool().connect();
   try {
     await client.query("BEGIN");
     const result = await fn({
@@ -104,7 +111,7 @@ export async function tx<T>(
 async function doMigrate(): Promise<void> {
   // Postgres equivalents of the original SQLite schema. We keep TEXT and
   // INTEGER (incl. 0/1 for booleans) so the existing row types stay valid.
-  await pool.query(`
+  await getPool().query(`
     CREATE TABLE IF NOT EXISTS users (
       id            TEXT PRIMARY KEY,
       email         TEXT UNIQUE NOT NULL,

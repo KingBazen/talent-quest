@@ -3,13 +3,13 @@
 try { process.loadEnvFile(".env.local"); } catch {}
 try { process.loadEnvFile(".env"); } catch {}
 
-import { ensureMigrated, pool } from "../src/lib/db";
+import { ensureMigrated, getPool } from "../src/lib/db";
 
 async function main() {
   if (process.env.NODE_ENV === "production") {
     throw new Error("db:reset refused: NODE_ENV is production");
   }
-  await pool.query(`
+  await getPool().query(`
     DROP TABLE IF EXISTS scores         CASCADE;
     DROP TABLE IF EXISTS score_notes    CASCADE;
     DROP TABLE IF EXISTS submissions    CASCADE;
@@ -21,11 +21,11 @@ async function main() {
   `);
   await ensureMigrated();
   console.log("[db-reset] dropped + recreated all tables");
-  await pool.end();
+  await getPool().end();
 }
 
 main().catch(async (e) => {
   console.error(e);
-  try { await pool.end(); } catch {}
+  try { await getPool().end(); } catch {}
   process.exit(1);
 });

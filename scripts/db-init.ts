@@ -3,12 +3,12 @@
 try { process.loadEnvFile(".env.local"); } catch {}
 try { process.loadEnvFile(".env"); } catch {}
 
-import { ensureMigrated, pool } from "../src/lib/db";
+import { ensureMigrated, getPool } from "../src/lib/db";
 
 async function main() {
   await ensureMigrated();
   console.log("[db-init] schema applied");
-  await pool.end();
+  await getPool().end();
 }
 
 main().catch((e) => {

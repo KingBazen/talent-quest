@@ -9,7 +9,7 @@ try { process.loadEnvFile(".env.local"); } catch {}
 try { process.loadEnvFile(".env"); } catch {}
 
 import bcrypt from "bcryptjs";
-import { exec, queryOne, pool } from "../src/lib/db";
+import { exec, queryOne, getPool } from "../src/lib/db";
 import { createContestant } from "../src/lib/contestants";
 
 async function hashPassword(plain: string) {
@@ -178,11 +178,11 @@ async function main() {
       "\n"
   );
 
-  await pool.end();
+  await getPool().end();
 }
 
 main().catch(async (e) => {
   console.error(e);
-  try { await pool.end(); } catch {}
+  try { await getPool().end(); } catch {}
   process.exit(1);
 });
