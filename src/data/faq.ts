@@ -3,16 +3,16 @@ import type { FaqEntry } from "@/types";
 export const FAQ_ENTRIES: FaqEntry[] = [
   {
     q: "Who can register for TalentQuest?",
-    a: "Anyone aged 13 and above can register. Contestants under 18 will need a parent or legal guardian to co-sign during the live audition. Phase 1 is a public demo, so feel free to test the form.",
+    a: "Anyone aged 13 and above can register. Contestants under 18 will need a parent or legal guardian to co-sign during the live audition.",
     qAm: "ለታለንት ኩዌስት ማን ሊመዘገብ ይችላል?",
     aAm: "ከ13 ዓመት እና ከዚያ በላይ የሆነ ማንም ሰው መመዝገብ ይችላል። ከ18 ዓመት በታች የሆኑ ተወዳዳሪዎች በቀጥታ የመጠቆሚያ ሙከራ ጊዜ ወላጅ ወይም ሕጋዊ ጠባቂ ፈርመው ማቅረብ አለባቸው።",
     tags: ["eligibility", "age", "register"],
   },
   {
     q: "Is registration free?",
-    a: "Phase 1 is fully free — it is a promotional demo. In Phase 2 the live competition may include an entry fee paid via Telebirr (with AdmasPay/Paylib). Any fee will be clearly displayed before payment.",
+    a: "Initial account creation is free. The competition entry fee (50 ETB) is collected via Telebirr (AdmasPay/Paylib) when you submit your video. Any fee is shown clearly before payment.",
     qAm: "መመዝገብ ነፃ ነው ወይ?",
-    aAm: "የመጀመሪያው ምዕራፍ ነፃ ነው። በሁለተኛው ምዕራፍ የቀጥታ ውድድር በቴሌብር ሊከፈል የሚችል አነስተኛ የመመዝገቢያ ክፍያ ሊኖር ይችላል።",
+    aAm: "መመዝገብ ነፃ ነው። የውድድር መግቢያ ክፍያ (50 ብር) ቪዲዮ ሲያስገቡ በቴሌብር ይከፈላል።",
     tags: ["payment", "telebirr", "fees"],
   },
   {
@@ -24,9 +24,9 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   },
   {
     q: "How do I submit my talent video?",
-    a: "After registering you will see your contestant ID and a profile page. Phase 1 is a demo — actual upload is disabled. In Phase 2 you'll upload directly through the platform (Cloudinary/Mux/S3) with progress tracking.",
+    a: "After signing in, open your profile and use the Submission tab. You can paste a YouTube link or upload directly to Cloudinary/Mux. Submission auto-advances your progress.",
     qAm: "የችሎታ ቪዲዮዬን እንዴት አስገባለሁ?",
-    aAm: "ከመመዝገብ በኋላ የውድድር መታወቂያዎ እና የግል ገጽዎ ይታያል። በምዕራፍ 1 ቪዲዮ ማስገባት የመስቀያ ማሳያ ብቻ ነው።",
+    aAm: "ከገቡ በኋላ የግል ገጽዎ ላይ ባለው የማስገቢያ ክፍል ቪዲዮዎን ያስገቡ። የYouTube አገናኝ ማስተባበር ወይም በቀጥታ መስቀል ይችላሉ።",
     tags: ["upload", "video", "submission"],
   },
   {
@@ -38,16 +38,16 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   },
   {
     q: "What format should I use for my video?",
-    a: "MP4 (H.264) is preferred. MOV and WEBM are also accepted. Aim for 1080p vertical (1080×1920) or horizontal (1920×1080). Maximum file size: 500 MB in Phase 2.",
+    a: "MP4 (H.264) is preferred. MOV and WEBM are also accepted. Aim for 1080p vertical (1080×1920) or horizontal (1920×1080). Maximum file size: 500 MB.",
     qAm: "ምን ዓይነት የቪዲዮ ፎርማት መጠቀም አለብኝ?",
     aAm: "MP4 (H.264) የተሻለ ነው። MOV እና WEBM እንዲሁ ተቀባይነት አላቸው።",
     tags: ["format", "video", "mp4"],
   },
   {
     q: "How will judges score me?",
-    a: "Judges score on five dimensions: Talent (out of 25), Originality (25), Stage Presence (20), Production Quality (15), and Audience Connection (15). Total out of 100. The breakdown will be visible on your profile after each round.",
+    a: "Judges score on five dimensions: Talent (25), Originality (25), Stage Presence (20), Production Quality (15), and Audience Connection (15) — total 100. Once at least three referees score, the average appears on your profile.",
     qAm: "ዳኞች እንዴት ይገመግማሉ?",
-    aAm: "ዳኞች በአምስት ዘርፎች ይገመግማሉ - ችሎታ፣ ኦሪጂናሊቲ፣ የመድረክ ሕልውና፣ የምርት ጥራት፣ እና የተመልካች ግንኙነት።",
+    aAm: "ዳኞች በአምስት ዘርፎች ይገመግማሉ — ችሎታ፣ ኦሪጂናሊቲ፣ የመድረክ ሕልውና፣ የምርት ጥራት፣ እና የተመልካች ግንኙነት።",
     tags: ["judging", "scoring", "rubric"],
   },
   {
@@ -66,9 +66,9 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   },
   {
     q: "Is there a regional or city qualifier?",
-    a: "Phase 2 will include city qualifiers in Addis Ababa, Bahir Dar, Hawassa, Mekelle, Dire Dawa, and Adama, then a national semi-final and live final. Phase 1 displays the bracket as a preview.",
+    a: "City qualifiers run in Addis Ababa, Bahir Dar, Hawassa, Mekelle, Dire Dawa, and Adama, followed by a national semi-final and live final.",
     qAm: "የክልል ወይም የከተማ ማጣሪያ አለ ወይ?",
-    aAm: "በምዕራፍ 2 ላይ የከተማ ማጣሪያዎች በአዲስ አበባ፣ ባሕር ዳር፣ ሐዋሳ፣ መቀሌ፣ ድሬዳዋ፣ እና አዳማ ይኖራሉ።",
+    aAm: "የከተማ ማጣሪያዎች በአዲስ አበባ፣ ባሕር ዳር፣ ሐዋሳ፣ መቀሌ፣ ድሬዳዋ፣ እና አዳማ ይኖራሉ።",
     tags: ["schedule", "rounds"],
   },
   {
@@ -80,9 +80,9 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   },
   {
     q: "Is my data safe?",
-    a: "Yes. Phase 1 stores everything only in your browser (localStorage). Phase 2 will use encrypted PostgreSQL, hashed passwords, signed media URLs, and role-based access control. We never share your phone or email with third parties.",
+    a: "Yes. Passwords are bcrypt-hashed; sessions are signed JWTs in HTTP-only cookies; PII is stored in a managed database with role-based access control. We never share your phone or email with third parties.",
     qAm: "የእኔ መረጃ ደህንነቱ የተጠበቀ ነው ወይ?",
-    aAm: "አዎ። በምዕራፍ 1 መረጃዎ በብራውዘር ብቻ ነው የሚቀመጠው። በምዕራፍ 2 ሁሉም መረጃ በተመሰጠረ የውሂብ ቋት ውስጥ ይቀመጣል።",
+    aAm: "አዎ። የይለፍ ቃላት በተመሰጠረ መልክ ይቀመጣሉ። ሁሉም ስርዓት በሚስጥር ካልኪዎች የተጠበቀ ነው።",
     tags: ["privacy", "security", "data"],
   },
 ];

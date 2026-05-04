@@ -1,18 +1,66 @@
 # Deployment plan
 
-## Phase 1 (this MVP)
+## Production deployment (current codebase)
 
-1. Push the repo to GitHub.
-2. Sign in to Vercel with GitHub, then **Add New → Project → Import Repo**.
-3. Vercel auto-detects Next.js. Build command `next build`, output dir
-   `.next`. No environment variables needed.
-4. Click **Deploy**. The first build takes ~90 s.
-5. After deploy, set custom domain in **Project → Settings → Domains** (e.g.
-   `talentquest.et`). Vercel issues TLS automatically.
-6. Optional: enable Web Analytics + Speed Insights (one click).
+The app is a single Next.js 14 deployment with API routes under `/api`. It
+needs:
 
-That's the entire Phase 1 deployment story — no databases, no secrets, no
-queue. Stakeholders are ready to demo within 5 minutes.
+1. Node 20.6+ runtime
+2. A writable directory for the SQLite file (or a Postgres URL — see below)
+3. The following env vars (see `.env.example` for the full list)
+
+### Required env vars
+
+| Var                        | Purpose                                      |
+| -------------------------- | -------------------------------------------- |
+| `JWT_SECRET`               | 32+ random chars; signs session cookies      |
+| `NEXT_PUBLIC_SITE_URL`     | Absolute origin (used in sitemap, payments)  |
+
+### Optional env vars (graceful stub mode without them)
+
+| Group              | Vars                                                          | Without |
+| ------------------ | ------------------------------------------------------------- | ------- |
+| Telebirr/AdmasPay  | `TELEBIRR_MERCHANT_ID`, `TELEBIRR_APP_KEY`, `TELEBIRR_HMAC_SECRET`, `TELEBIRR_NOTIFY_URL`, `TELEBIRR_API_URL` | Returns mock redirect URLs; webhooks rejected |
+| Cloudinary uploads | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_UPLOAD_PRESET` | Falls back to local `/public/uploads` |
+| LLM chatbot        | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`                        | Static FAQ matcher only |
+
+### Deploy targets
+
+#### Render / Fly.io / Railway / VPS (SQLite — easiest)
+
+1. Provision the service, attach a persistent volume mounted at `/app/data`.
+2. Set `DATABASE_PATH=/app/data/talentquest.db` and the env vars above.
+3. Build command: `npm install && npm run build`.
+4. Start command: `npm run db:init && npm run start`.
+5. (One-shot) Run `npm run db:seed` after first deploy or via a manual job.
+
+#### Vercel (Postgres — required)
+
+Vercel's serverless filesystem is read-only and short-lived, so SQLite
+won't persist. Switch to Postgres:
+
+1. Create a Vercel Postgres / Neon / Supabase database.
+2. Replace `better-sqlite3` with `pg` (or `@vercel/postgres`) in
+   `src/lib/db.ts`. The schema in `migrate()` is plain SQL — only minor
+   tweaks (e.g. `INTEGER` → `BIGINT`, `?` → `$1`) are needed.
+3. Set `DATABASE_URL` and the secrets above in **Project → Settings →
+   Environment Variables**.
+4. Push to a GitHub branch connected to Vercel; auto-deploy.
+5. Run migrations once via `vercel env pull && DATABASE_URL=… npm run db:init`.
+
+### Smoke checks after deploy
+
+```bash
+curl https://<your-host>/api/auth/me              # → {ok:true, data:{user:null,...}}
+curl -X POST https://<your-host>/api/auth/login \
+  -H 'content-type: application/json' \
+  -d '{"email":"admin@…","password":"…"}'         # → {ok:true,data:{user:{...}}}
+```
+
+The `/admin` and `/referee` routes 307 to `/login?next=…` for unauthenticated
+visitors — that's the middleware enforcing RBAC at the edge.
+
+---
 
 ## Phase 2 (production system)
 

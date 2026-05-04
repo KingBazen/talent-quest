@@ -30,10 +30,10 @@ export default function UploadGuidePage() {
         <div className="mt-6 flex flex-wrap gap-2">
           <Badge variant="gradient">
             <Sparkles className="h-3 w-3 mr-1" />
-            Phase 1 demo · upload disabled
+            Submit from your profile
           </Badge>
           <Badge variant="outline">
-            Phase 2 · direct upload to Cloudinary / Mux / S3
+            MP4 / H.264 · up to 180 seconds
           </Badge>
         </div>
       </div>

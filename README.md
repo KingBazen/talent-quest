@@ -3,58 +3,85 @@
 > Ethiopia's stage for the next generation of singers, dancers, comedians,
 > actors, instrumentalists, and one-of-a-kind talents.
 
-This repository ships in **two phases**:
-
-- **Phase 1 (this app)** — a frontend-only, Vercel-ready Next.js promo MVP with
-  a registration demo, contestant ID generator, profile, result checker, video
-  showcase, upload guide, FAQ + bilingual (EN / አማርኛ) chatbot, and admin /
-  referee preview dashboards.
-- **Phase 2** — a full production system with real authentication, PostgreSQL,
-  Node.js (Express/NestJS) backend, Telebirr payments via AdmasPay/Paylib,
-  video upload + processing (Cloudinary / Mux / S3), an LLM-powered chatbot,
-  and role-based admin / referee dashboards. **Full plan in [`docs/`](docs/).**
+**Production-mode** Next.js 14 application with a real backend, persisted
+data, secure auth, role-based dashboards, payment scaffolding, and a
+Codespaces-ready dev environment.
 
 ---
 
-## Tech stack (Phase 1)
+## What's in the box
 
-| Concern        | Tooling                                |
-| -------------- | -------------------------------------- |
-| Framework      | Next.js 14 (App Router) + TypeScript   |
-| Styling        | Tailwind CSS + shadcn/ui (new-york)    |
-| Animation      | Framer Motion                          |
-| Icons          | Lucide React                           |
-| Forms          | React Hook Form + Zod                  |
-| Theming        | next-themes (dark default)             |
-| State (demo)   | localStorage                           |
-| Deployment     | Vercel                                 |
+| Layer            | Implementation                                                      |
+| ---------------- | ------------------------------------------------------------------- |
+| Frontend         | Next.js 14 App Router · Tailwind · shadcn/ui · Framer Motion        |
+| API              | Next.js Route Handlers (Node runtime) under `/api/*`                |
+| Database         | SQLite (via `better-sqlite3`) — file at `data/talentquest.db`       |
+| Auth             | bcrypt password hashing · HS256 JWT in HTTP-only cookie · `jose`    |
+| RBAC             | `contestant`, `referee`, `admin` roles · edge middleware on `/admin` and `/referee` |
+| Payments         | Telebirr / AdmasPay HMAC-signed init + webhook (stub mode without creds) |
+| Uploads          | Cloudinary signed direct-upload (dev fallback to local `/public/uploads`) |
+| Chatbot          | Bilingual EN/AM static FAQ matcher · LLM fallthrough when `ANTHROPIC_API_KEY` is set |
+
+The full Phase-2 product spec, judging rubric, and pipeline plans still
+live in [`docs/`](docs/).
 
 ---
 
-## Run locally
+## Quick start (GitHub Codespaces)
+
+The `.devcontainer/devcontainer.json` does the work for you — open the repo
+in a Codespace and the container will:
+
+1. `npm install`
+2. `npm run db:init` (apply migrations)
+3. `npm run db:seed` (default admin/referee + four demo contestants)
+
+Then start the app:
 
 ```bash
-npm install
-npm run dev      # http://localhost:3000
-npm run build    # production build
-npm run lint
-npm run type-check
+npm run dev      # http://localhost:3000  (auto-forwarded)
 ```
 
-Node.js 18.18+ is required (Next.js 14).
+Seeded test accounts (override via env vars before seeding):
+
+| Role      | Email                          | Password     |
+| --------- | ------------------------------ | ------------ |
+| Admin     | `admin@talentquest.local`      | `Admin1234!` |
+| Referee   | `referee@talentquest.local`    | `Referee1234!` |
+| Contestant| `hanna@example.com`            | `Demo1234!`  |
+| Contestant| `selam@example.com`            | `Demo1234!`  |
+| Contestant| `yonas@example.com`            | `Demo1234!`  |
+| Contestant| `mikiyas@example.com`          | `Demo1234!`  |
 
 ---
 
-## Deploy to Vercel
+## Quick start (local, outside Codespaces)
 
-1. Push this repository to GitHub / GitLab / Bitbucket.
-2. Import the project on [vercel.com/new](https://vercel.com/new).
-3. Vercel will auto-detect Next.js. No environment variables are required for
-   Phase 1.
-4. Click **Deploy**. The site is live at the assigned `*.vercel.app` URL.
-5. Configure a custom domain in Vercel → Project → Settings → Domains.
+```bash
+cp .env.example .env.local
+# Edit .env.local — at minimum, set JWT_SECRET to a long random string.
+npm install
+npm run db:init
+npm run db:seed
+npm run dev
+```
 
-The repository contains a `vercel.json` for explicit framework hints.
+Node.js 20.6+ is required (uses `process.loadEnvFile`).
+
+---
+
+## Scripts
+
+```bash
+npm run dev          # Next.js dev server (HMR)
+npm run build        # production build
+npm run start        # serve the production build
+npm run lint
+npm run type-check
+npm run db:init      # apply schema migrations (idempotent)
+npm run db:seed      # insert default admin/referee + demo contestants
+npm run db:reset     # delete data/talentquest.db, re-init, re-seed
+```
 
 ---
 
@@ -62,71 +89,104 @@ The repository contains a `vercel.json` for explicit framework hints.
 
 ```
 src/
-├── app/                       # App Router pages
-│   ├── page.tsx               # Homepage
-│   ├── register/              # 3-step demo registration
-│   ├── how-it-works/          # Flow + judging rubric + schedule
-│   ├── categories/            # Six talent categories
-│   ├── upload-guide/          # Recording best practices
-│   ├── showcase/              # Reels + YouTube-grid views
-│   ├── profile/               # Demo contestant control panel
-│   ├── result-checker/        # Look up by 6-digit ID
-│   ├── faq/                   # FAQ + bilingual lookup
-│   ├── contact/               # Demo contact form
-│   ├── admin-demo/            # Mock admin dashboard
-│   ├── referee-demo/          # Mock referee scoring console
-│   ├── layout.tsx             # Shell, theme, chatbot widget
-│   ├── globals.css            # Tailwind + design tokens
-│   └── not-found.tsx
+├── app/                      # App Router pages + API routes
+│   ├── api/
+│   │   ├── auth/{register,login,logout,me}
+│   │   ├── contestants/[id]
+│   │   ├── contestants/me/advance
+│   │   ├── submissions
+│   │   ├── scores
+│   │   ├── contact
+│   │   ├── chatbot
+│   │   ├── showcase
+│   │   ├── admin/{stats,contestants}
+│   │   ├── referee/queue
+│   │   └── payments/{init,webhook}
+│   ├── admin/                # Auth-gated admin console
+│   ├── referee/              # Auth-gated referee scoring dashboard
+│   ├── login/                # Email + password login
+│   ├── register/             # 3-step registration with password
+│   ├── profile/              # Contestant control panel (live data)
+│   ├── result-checker/       # 6-digit ID public lookup
+│   ├── showcase/             # Reels / grid video gallery
+│   ├── upload-guide/, faq/, contact/, categories/, how-it-works/
+│   └── layout.tsx            # SessionProvider + nav + footer + chatbot
 ├── components/
-│   ├── ui/                    # shadcn primitives (button, card, ...)
-│   ├── layout/                # Navbar, footer, theme toggle, banner
-│   ├── home/                  # Hero, categories, showcase, CTA
-│   └── chatbot/               # Floating Stage Bot widget
-├── data/                      # Static JSON-style demo data
-├── lib/                       # utils + localStorage helpers
-└── types/                     # Shared TS types
+│   ├── auth/SessionProvider.tsx   # /api/auth/me hook + logout
+│   ├── chatbot/ChatbotWidget.tsx  # POSTs /api/chatbot
+│   ├── home/, layout/, ui/
+├── data/                     # Static lookups (categories, FAQ, judging, schedule)
+├── lib/
+│   ├── db.ts                 # better-sqlite3 + schema migrations
+│   ├── auth.ts               # bcrypt, JWT (jose), session cookie helpers
+│   ├── api.ts                # Zod parse + error envelope
+│   ├── contestants.ts        # contestant + submission repos
+│   ├── scores.ts             # per-criterion upsert + aggregation
+│   ├── payments.ts           # Telebirr/AdmasPay signed init + webhook verify
+│   ├── uploads.ts            # Cloudinary signed direct-upload intent
+│   ├── dto.ts (server)       # row → public DTO
+│   └── dto-types.ts (client) # client-safe DTO type mirrors
+├── middleware.ts             # /admin and /referee role enforcement
+└── types/                    # Shared TS types
+
+scripts/
+├── db-init.ts                # apply migrations
+└── db-seed.ts                # seed admin/referee/contestants
+
+data/                         # gitignored — SQLite file lives here
 ```
 
 ---
 
-## What's clearly labelled as "demo / future-production"
+## Configuration
 
-Phase 1 visibly marks these areas wherever they appear:
+All env vars are documented in `.env.example`. The minimum required is:
 
-| Area                  | Phase 1 (this MVP)                         | Phase 2 production |
-| --------------------- | ------------------------------------------ | ------------------ |
-| Authentication        | None — localStorage only                   | JWT + RBAC + 2FA   |
-| Payments              | UI mock                                    | Telebirr (AdmasPay/Paylib) + webhook verification |
-| Video upload          | UI mock + showcase data only               | Cloudinary / Mux / Supabase Storage / S3 with chunked upload |
-| Judge scoring         | Visual rubric, scores not persisted        | Authenticated referee dashboard + persisted scores |
-| Chatbot               | Static EN/AM keyword matcher               | LLM-backed RAG over rules / contestants / schedule |
-| Contestant ID         | Random 6-digit, browser-local              | Globally unique with collision check + audit |
+```env
+JWT_SECRET=<32+ random chars>
+```
 
-Everything is still functional from a UX perspective — stakeholders can walk
-through the entire journey without a backend.
+Optional — leave blank and the system runs in graceful stub mode:
+
+| Var                          | Effect                                                  |
+| ---------------------------- | ------------------------------------------------------- |
+| `TELEBIRR_*`                 | Real Telebirr/AdmasPay init + HMAC-signed webhook       |
+| `CLOUDINARY_*`               | Signed direct-upload for videos                         |
+| `ANTHROPIC_API_KEY`          | Replaces static chatbot with Claude (`-haiku-4-5`)      |
+| `SEED_ADMIN_*` / `SEED_REFEREE_*` | Custom seed credentials                            |
+| `DATABASE_PATH`              | Override SQLite file location                           |
+| `NEXT_PUBLIC_SITE_URL`       | Used in sitemap and email/payment return URLs           |
 
 ---
 
-## Phase 2 documentation
+## Deployment
 
-The `docs/` folder contains the complete Phase 2 plan:
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full guide. Headlines:
 
-- `PRODUCT_SPEC.md`
-- `USER_STORIES.md`
-- `REQUIREMENTS.md`
-- `ARCHITECTURE.md`
-- `DATABASE_SCHEMA.md`
-- `API_PLAN.md`
-- `SECURITY.md`
-- `PAYMENTS_TELEBIRR.md`
-- `VIDEO_PIPELINE.md`
-- `DEPLOYMENT.md`
-- `ROADMAP.md`
-- `ACCEPTANCE_CRITERIA.md`
+- **Codespaces / Render / Fly / a VPS**: SQLite works out of the box. Mount
+  a persistent volume at `/app/data` and point `DATABASE_PATH` at it.
+- **Vercel**: serverless filesystems are read-only and cold-start, so
+  switch to a managed Postgres. The codebase isolates SQL in `src/lib/db.ts`
+  and the small set of repo modules — replacing `better-sqlite3` with `pg`
+  or `@vercel/postgres` is a contained change.
+- Always set `JWT_SECRET` to a 32+ char random value in production.
+- Cloudinary and Telebirr live mode require the relevant env vars; without
+  them the API responds in stub mode (recorded locally, useful for QA).
+
+---
+
+## Security highlights
+
+- Passwords hashed with bcrypt (cost 10) — never stored or logged in plain text
+- JWT sessions signed HS256, HTTP-only cookies, `Secure` flag in production, 14-day TTL
+- `/admin` and `/referee` enforced at the **edge** by Next.js middleware so
+  unauthenticated users never reach the page handler
+- Contestant ID generation uses `crypto.randomInt` and collision-checks the DB
+- Telebirr webhook signature is verified with `crypto.timingSafeEqual` —
+  unsigned or mismatched callbacks are rejected with 401 so the provider retries
 
 ---
 
 ## License
 
-© TalentQuest. Phase 1 is a promotional demo.
+© TalentQuest. All rights reserved.

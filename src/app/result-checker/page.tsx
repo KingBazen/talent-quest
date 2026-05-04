@@ -10,33 +10,61 @@ import {
   XCircle,
   Trophy,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { demoStore } from "@/lib/storage";
-import type { DemoContestant } from "@/types";
+import { api, ApiError } from "@/lib/client-api";
+import { useSession } from "@/components/auth/SessionProvider";
+import type { PublicContestantDTO } from "@/lib/dto-types";
 import { TALENT_CATEGORIES } from "@/data/categories";
 
-export default function ResultCheckerPage() {
-  const [id, setId] = React.useState("");
-  const [result, setResult] = React.useState<DemoContestant | null>(null);
-  const [searched, setSearched] = React.useState(false);
+interface CheckResponse {
+  contestant: PublicContestantDTO;
+  score: { total: number; judges: number } | null;
+}
 
-  function check(e: React.FormEvent) {
+export default function ResultCheckerPage() {
+  const { contestant: me } = useSession();
+  const [id, setId] = React.useState("");
+  const [result, setResult] = React.useState<CheckResponse | null>(null);
+  const [searched, setSearched] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+
+  async function check(e: React.FormEvent) {
     e.preventDefault();
-    const c = demoStore.getById(id.trim());
-    setResult(c);
-    setSearched(true);
+    if (!/^\d{6}$/.test(id)) {
+      setError("Enter a 6-digit ID");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await api.get<CheckResponse>(`/api/contestants/${id}`);
+      setResult(data);
+    } catch (e) {
+      setResult(null);
+      setError(
+        e instanceof ApiError ? e.message : "Lookup failed — try again"
+      );
+    } finally {
+      setSearched(true);
+      setLoading(false);
+    }
   }
 
   function tryMine() {
-    const me = demoStore.getCurrent();
     if (me) {
       setId(me.id);
-      setResult(me);
-      setSearched(true);
+      // auto-submit
+      setTimeout(() => {
+        document.getElementById("result-form")?.dispatchEvent(
+          new Event("submit", { cancelable: true, bubbles: true })
+        );
+      }, 0);
     }
   }
 
@@ -49,11 +77,12 @@ export default function ResultCheckerPage() {
         Did you make the <span className="gradient-text">cut</span>?
       </h1>
       <p className="mt-3 text-muted-foreground text-lg">
-        Type your 6-digit demo contestant ID. We'll show your status, demo
-        score breakdown, and next step in the bracket.
+        Type your 6-digit contestant ID. We&apos;ll show your status, current
+        score, and next step in the bracket.
       </p>
 
       <form
+        id="result-form"
         onSubmit={check}
         className="mt-8 rounded-2xl border border-border/60 bg-card p-6"
       >
@@ -67,22 +96,27 @@ export default function ResultCheckerPage() {
             placeholder="e.g. 482910"
             className="font-mono tracking-widest text-lg"
           />
-          <Button type="submit" variant="gradient">
-            <Search className="h-4 w-4 mr-1.5" />
-            Check
+          <Button type="submit" variant="gradient" disabled={loading}>
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Search className="h-4 w-4 mr-1.5" />
+                Check
+              </>
+            )}
           </Button>
         </div>
-        <button
-          type="button"
-          onClick={tryMine}
-          className="mt-3 text-xs text-muted-foreground underline hover:text-foreground"
-        >
-          Use my demo ID
-        </button>
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Phase 1 only finds IDs you created in this browser. Phase 2 will look
-          up across the official PostgreSQL database in real time.
-        </p>
+        {me && (
+          <button
+            type="button"
+            onClick={tryMine}
+            className="mt-3 text-xs text-muted-foreground underline hover:text-foreground"
+          >
+            Use my ID ({me.id})
+          </button>
+        )}
+        {error && <p className="mt-3 text-xs text-destructive">{error}</p>}
       </form>
 
       {searched && (
@@ -92,24 +126,27 @@ export default function ResultCheckerPage() {
           className="mt-8"
         >
           {result ? (
-            <ResultCard contestant={result} />
-          ) : (
+            <ResultCard result={result} />
+          ) : !error ? (
             <NotFound id={id} />
-          )}
+          ) : null}
         </motion.div>
       )}
     </div>
   );
 }
 
-function ResultCard({ contestant }: { contestant: DemoContestant }) {
+function ResultCard({ result }: { result: CheckResponse }) {
+  const { contestant, score } = result;
   const cat = TALENT_CATEGORIES.find((c) => c.id === contestant.category);
   const completed = contestant.progress.filter((p) => p.done).length;
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-6">
       <div className="flex flex-wrap items-center gap-3">
         <Trophy className="h-6 w-6 text-gold-500" />
-        <h2 className="font-display text-2xl font-bold">{contestant.fullName}</h2>
+        <h2 className="font-display text-2xl font-bold">
+          {contestant.fullName}
+        </h2>
         <Badge
           variant={contestant.status === "advanced" ? "gradient" : "secondary"}
           className="capitalize"
@@ -123,11 +160,23 @@ function ResultCard({ contestant }: { contestant: DemoContestant }) {
       </p>
 
       <div className="mt-6 grid sm:grid-cols-3 gap-3 text-center">
-        <Stat label="Stages cleared" value={`${completed}/${contestant.progress.length}`} />
-        <Stat label="Demo score" value="82 / 100" />
+        <Stat
+          label="Stages cleared"
+          value={`${completed}/${contestant.progress.length}`}
+        />
+        <Stat
+          label="Score"
+          value={
+            score
+              ? `${score.total} / 100`
+              : "Awaiting judges"
+          }
+        />
         <Stat
           label="Round"
-          value={contestant.status === "registered" ? "Pre-submission" : "Round 1"}
+          value={
+            contestant.status === "registered" ? "Pre-submission" : "Round 1"
+          }
         />
       </div>
 
@@ -175,11 +224,11 @@ function NotFound({ id }: { id: string }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-6 text-center">
       <XCircle className="mx-auto h-10 w-10 text-rose-500" />
-      <h2 className="mt-3 font-display text-2xl font-bold">No match in this browser</h2>
+      <h2 className="mt-3 font-display text-2xl font-bold">No match found</h2>
       <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-        We couldn't find ID <span className="font-mono">{id || "—"}</span> in
-        this device's localStorage. Try registering first, or — in Phase 2 —
-        any official ID will resolve here.
+        We couldn&apos;t find ID <span className="font-mono">{id || "—"}</span>.
+        Either it doesn&apos;t exist or it hasn&apos;t finished registration
+        yet.
       </p>
       <div className="mt-5 flex justify-center gap-2">
         <Button asChild variant="gradient">

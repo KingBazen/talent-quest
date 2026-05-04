@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SHOWCASE_CLIPS } from "@/data/showcase";
 import { TALENT_CATEGORIES } from "@/data/categories";
 import type { ShowcaseClip, TalentCategoryId } from "@/types";
+import { api } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 
 function fmt(n: number): string {
@@ -29,10 +30,19 @@ function fmt(n: number): string {
 
 export default function ShowcasePage() {
   const [filter, setFilter] = React.useState<TalentCategoryId | "all">("all");
+  const [clips, setClips] = React.useState<ShowcaseClip[]>(SHOWCASE_CLIPS);
+
+  React.useEffect(() => {
+    api
+      .get<{ items: ShowcaseClip[] }>("/api/showcase")
+      .then((d) => {
+        if (d.items?.length) setClips(d.items);
+      })
+      .catch(() => {});
+  }, []);
+
   const filtered =
-    filter === "all"
-      ? SHOWCASE_CLIPS
-      : SHOWCASE_CLIPS.filter((c) => c.category === filter);
+    filter === "all" ? clips : clips.filter((c) => c.category === filter);
 
   return (
     <div className="container py-8 md:py-14">
@@ -49,7 +59,7 @@ export default function ShowcasePage() {
         </div>
         <Badge variant="gradient" className="self-start md:self-end">
           <Sparkles className="h-3 w-3 mr-1" />
-          Demo data — Phase 2 streams via Mux/Cloudinary
+          {clips.length} clips
         </Badge>
       </div>
 

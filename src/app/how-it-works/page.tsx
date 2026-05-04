@@ -23,13 +23,12 @@ const FLOW = [
   {
     icon: ClipboardList,
     title: "1 · Register your profile",
-    text: "Pick your category, age, and city. Get a 6-digit demo contestant ID instantly. (Phase 2: real account, password, email/SMS verification.)",
+    text: "Pick your category, age, and city. Create your account with email and password — your 6-digit contestant ID is generated and reserved instantly.",
   },
   {
     icon: Video,
     title: "2 · Submit your performance video",
-    text: "60–180 seconds, MP4 (H.264). Demo upload in Phase 1; direct upload to Cloudinary/Mux in Phase 2.",
-    future: "Real video upload — Phase 2",
+    text: "60–180 seconds, MP4 (H.264). Submit from your profile via direct upload to Cloudinary / Mux, or paste a YouTube link.",
   },
   {
     icon: Search,
@@ -39,8 +38,7 @@ const FLOW = [
   {
     icon: Users,
     title: "4 · Judge scoring",
-    text: "Industry referees score on a 100-point rubric. You'll see the breakdown on your profile after each round.",
-    future: "Live judge dashboard — Phase 2",
+    text: "Industry referees score on a 100-point rubric. The aggregate appears on your profile and on the public result checker after three judges weigh in.",
   },
   {
     icon: Mic2,
@@ -83,11 +81,6 @@ export default function HowItWorksPage() {
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-display text-xl font-bold">{s.title}</h3>
-                  {s.future && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      {s.future}
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {s.text}
@@ -130,12 +123,12 @@ export default function HowItWorksPage() {
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="h-5 w-5 text-brand-500" />
           <h2 className="font-display text-2xl md:text-4xl font-bold">
-            Event schedule (Phase 2)
+            Event schedule
           </h2>
         </div>
         <p className="text-muted-foreground max-w-2xl">
-          Indicative dates for our first national season. Phase 1 displays this
-          as a preview; final dates will be confirmed before Phase 2 launch.
+          Indicative dates for our first national season. Final dates are
+          confirmed at the start of each round.
         </p>
         <ol className="relative border-l border-border/60 ml-3 mt-6 space-y-6">
           {SCHEDULE.map((row) => (

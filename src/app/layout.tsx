@@ -5,8 +5,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { DemoBanner } from "@/components/layout/DemoBanner";
 import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget";
+import { SessionProvider } from "@/components/auth/SessionProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -72,11 +72,12 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-background font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <DemoBanner />
-          <Navbar />
-          <main className="min-h-[60vh]">{children}</main>
-          <Footer />
-          <ChatbotWidget />
+          <SessionProvider>
+            <Navbar />
+            <main className="min-h-[60vh]">{children}</main>
+            <Footer />
+            <ChatbotWidget />
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

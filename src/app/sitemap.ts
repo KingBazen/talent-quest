@@ -3,20 +3,18 @@ import type { MetadataRoute } from "next";
 const ROUTES = [
   "",
   "/register",
+  "/login",
   "/how-it-works",
   "/categories",
   "/upload-guide",
   "/showcase",
-  "/profile",
   "/result-checker",
   "/faq",
   "/contact",
-  "/admin-demo",
-  "/referee-demo",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://talentquest.example.com";
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://talentquest.example.com";
   const now = new Date();
   return ROUTES.map((path) => ({
     url: `${base}${path}`,

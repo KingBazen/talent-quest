@@ -22,11 +22,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { api, ApiError } from "@/lib/client-api";
 
 const schema = z.object({
   name: z.string().min(2, "Your name please"),
   email: z.string().email("Enter a valid email"),
-  topic: z.string().min(1, "Pick a topic"),
+  topic: z.enum(["contestant", "partnership", "press", "bug", "other"], {
+    errorMap: () => ({ message: "Pick a topic" }),
+  }),
   message: z.string().min(10, "Tell us a bit more (10+ chars)"),
 });
 
@@ -34,19 +37,21 @@ type Values = z.infer<typeof schema>;
 
 export default function ContactPage() {
   const [sent, setSent] = React.useState(false);
+  const [serverError, setServerError] = React.useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<Values>({ resolver: zodResolver(schema) });
 
-  function onSubmit(_values: Values) {
-    return new Promise<void>((resolve) =>
-      setTimeout(() => {
-        setSent(true);
-        resolve();
-      }, 600)
-    );
+  async function onSubmit(values: Values) {
+    setServerError(null);
+    try {
+      await api.post("/api/contact", values);
+      setSent(true);
+    } catch (e) {
+      setServerError(e instanceof ApiError ? e.message : "Could not send");
+    }
   }
 
   return (
@@ -122,9 +127,8 @@ export default function ContactPage() {
               Message received.
             </h2>
             <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
-              In Phase 1 the form just simulates a send. In Phase 2 your message
-              is delivered via email/SMS notification and tracked in the admin
-              dashboard.
+              We&apos;ll be in touch within 48 hours. Your message is logged
+              and routed to the right team.
             </p>
             <Button
               variant="ghost"
@@ -137,7 +141,7 @@ export default function ContactPage() {
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Badge variant="gradient" className="mb-2">
-              <Sparkles className="h-3 w-3 mr-1" /> Demo form — no message is actually sent
+              <Sparkles className="h-3 w-3 mr-1" /> Live form
             </Badge>
             <div>
               <Label className="text-sm font-semibold">Your name</Label>
@@ -154,8 +158,9 @@ export default function ContactPage() {
               <select
                 className="mt-1.5 flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 {...register("topic")}
+                defaultValue=""
               >
-                <option value="">Pick a topic</option>
+                <option value="" disabled>Pick a topic</option>
                 <option value="contestant">Contestant question</option>
                 <option value="partnership">Sponsorship / partnership</option>
                 <option value="press">Press / media</option>
@@ -178,6 +183,11 @@ export default function ContactPage() {
                 <p className="text-xs text-destructive mt-1">{errors.message.message}</p>
               )}
             </div>
+            {serverError && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+                {serverError}
+              </p>
+            )}
             <Button
               type="submit"
               variant="gradient"

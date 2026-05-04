@@ -33,14 +33,19 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { TALENT_CATEGORIES } from "@/data/categories";
-import { demoStore } from "@/lib/storage";
-import { generateContestantId } from "@/lib/utils";
-import type { DemoContestant, ProgressStep, TalentCategoryId } from "@/types";
+import { api, ApiError } from "@/lib/client-api";
+import { useSession } from "@/components/auth/SessionProvider";
+import type { ContestantDTO } from "@/lib/dto-types";
+import type { TalentCategoryId } from "@/types";
 
 const schema = z.object({
   fullName: z.string().min(2, "Please enter your full name"),
   stageName: z.string().optional(),
   email: z.string().email("Enter a valid email"),
+  password: z
+    .string()
+    .min(8, "At least 8 characters")
+    .max(72, "Maximum 72 characters"),
   phone: z
     .string()
     .min(9, "Enter a valid phone number")
@@ -59,7 +64,7 @@ const schema = z.object({
   bio: z.string().min(20, "Add a short bio (at least 20 characters)").max(500),
   agreedToTerms: z
     .boolean()
-    .refine((v) => v === true, { message: "You must agree to the demo terms" }),
+    .refine((v) => v === true, { message: "You must agree to the terms" }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -68,8 +73,10 @@ const TOTAL_STEPS = 3;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { refresh } = useSession();
   const [step, setStep] = React.useState(1);
-  const [submitted, setSubmitted] = React.useState<DemoContestant | null>(null);
+  const [submitted, setSubmitted] = React.useState<ContestantDTO | null>(null);
+  const [serverError, setServerError] = React.useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -78,6 +85,7 @@ export default function RegisterPage() {
       fullName: "",
       stageName: "",
       email: "",
+      password: "",
       phone: "",
       age: 18 as unknown as number,
       city: "",
@@ -91,7 +99,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     trigger,
     setValue,
     watch,
@@ -99,7 +107,7 @@ export default function RegisterPage() {
 
   async function next() {
     let fields: (keyof FormValues)[] = [];
-    if (step === 1) fields = ["fullName", "email", "phone", "age", "city"];
+    if (step === 1) fields = ["fullName", "email", "password", "phone", "age", "city"];
     if (step === 2) fields = ["category", "experience", "bio"];
     const ok = await trigger(fields);
     if (!ok) return;
@@ -110,35 +118,20 @@ export default function RegisterPage() {
     setStep((s) => Math.max(s - 1, 1));
   }
 
-  function onSubmit(values: FormValues) {
-    const id = generateContestantId();
-    const now = new Date().toISOString();
-    const progress: ProgressStep[] = [
-      { key: "registered", label: "Registered", done: true, date: now },
-      { key: "video_submitted", label: "Video submitted", done: false },
-      { key: "review", label: "Under review", done: false },
-      { key: "shortlisted", label: "Shortlist decision", done: false },
-      { key: "audition", label: "Live audition", done: false },
-      { key: "result", label: "Final result", done: false },
-    ];
-    const c: DemoContestant = {
-      id,
-      fullName: values.fullName,
-      stageName: values.stageName,
-      email: values.email,
-      phone: values.phone,
-      age: Number(values.age),
-      city: values.city,
-      category: values.category,
-      experience: values.experience,
-      bio: values.bio,
-      agreedToTerms: values.agreedToTerms,
-      createdAt: now,
-      status: "registered",
-      progress,
-    };
-    demoStore.saveContestant(c);
-    setSubmitted(c);
+  async function onSubmit(values: FormValues) {
+    setServerError(null);
+    try {
+      const res = await api.post<{ contestant: ContestantDTO }>(
+        "/api/auth/register",
+        values
+      );
+      await refresh();
+      setSubmitted(res.contestant);
+    } catch (e) {
+      setServerError(
+        e instanceof ApiError ? e.message : "Registration failed"
+      );
+    }
   }
 
   const watched = watch();
@@ -153,14 +146,14 @@ export default function RegisterPage() {
       <div className="mb-8">
         <Badge variant="outline" className="mb-3">
           <Sparkles className="h-3 w-3 mr-1 text-brand-500" />
-          Demo registration · stored locally on your device
+          Live registration · secure account
         </Badge>
         <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
           Register your <span className="gradient-text">talent</span>.
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Three short steps. Your demo contestant ID is generated instantly.
-          No backend, no payment — Phase 1 is fully free to try.
+          Three short steps. Your contestant ID is created instantly and tied
+          to your account so you can log back in any time.
         </p>
       </div>
 
@@ -196,18 +189,31 @@ export default function RegisterPage() {
               <Field label="Email" error={errors.email?.message}>
                 <Input
                   type="email"
+                  autoComplete="email"
                   placeholder="you@example.com"
                   {...register("email")}
                 />
               </Field>
-              <Field label="Phone" error={errors.phone?.message}>
+              <Field
+                label="Password"
+                hint="8+ characters"
+                error={errors.password?.message}
+              >
                 <Input
-                  type="tel"
-                  placeholder="+251 9XX XX XX XX"
-                  {...register("phone")}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  {...register("password")}
                 />
               </Field>
             </div>
+            <Field label="Phone" error={errors.phone?.message}>
+              <Input
+                type="tel"
+                placeholder="+251 9XX XX XX XX"
+                {...register("phone")}
+              />
+            </Field>
             <div className="grid sm:grid-cols-2 gap-5">
               <Field label="Age" error={errors.age?.message}>
                 <Input
@@ -335,22 +341,14 @@ export default function RegisterPage() {
               </dl>
             </div>
 
-            <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 text-sm flex gap-3">
-              <ShieldAlert className="h-5 w-5 shrink-0 text-amber-500 mt-0.5" />
+            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 text-sm flex gap-3">
+              <ShieldAlert className="h-5 w-5 shrink-0 text-emerald-500 mt-0.5" />
               <div className="space-y-2">
-                <p className="font-semibold">Phase 1 — demo notice</p>
+                <p className="font-semibold">Your data is secured</p>
                 <ul className="space-y-1 text-muted-foreground list-disc pl-4">
-                  <li>
-                    No real authentication. No password. No backend storage.
-                  </li>
-                  <li>
-                    Your data lives in your browser only. Clear it any time
-                    from your profile.
-                  </li>
-                  <li>
-                    Payment, video upload, and judge scoring are{" "}
-                    <strong>future-production</strong> features.
-                  </li>
+                  <li>Password hashed with bcrypt; never stored in plain text.</li>
+                  <li>Session cookie is HTTP-only, signed with HS256 JWT.</li>
+                  <li>Registration fee is collected at video upload time.</li>
                 </ul>
               </div>
             </div>
@@ -365,17 +363,23 @@ export default function RegisterPage() {
                 }
                 label={
                   <span>
-                    I understand this is a Phase 1 promotional demo and that no
-                    competition entry, payment, or contract is being created.
+                    I agree to the TalentQuest entry rules, content licensing
+                    terms, and the privacy policy.
                   </span>
                 }
               />
             </Field>
 
+            {serverError && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+                {serverError}
+              </p>
+            )}
+
             <div className="grid sm:grid-cols-3 gap-3 text-xs text-muted-foreground">
-              <FuturePill icon={Lock} label="Real auth — Phase 2" />
-              <FuturePill icon={CreditCard} label="Telebirr payment — Phase 2" />
-              <FuturePill icon={Trophy} label="Judge scoring — Phase 2" />
+              <FuturePill icon={Lock} label="Bcrypt + JWT auth" />
+              <FuturePill icon={CreditCard} label="Telebirr at upload" />
+              <FuturePill icon={Trophy} label="Persisted scoring" />
             </div>
           </motion.div>
         )}
@@ -398,8 +402,13 @@ export default function RegisterPage() {
               Continue <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button type="submit" variant="gradient" size="lg">
-              Generate my contestant ID
+            <Button
+              type="submit"
+              variant="gradient"
+              size="lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating account…" : "Create my account"}
               <Sparkles className="ml-2 h-4 w-4" />
             </Button>
           )}
@@ -453,7 +462,7 @@ function FuturePill({
   );
 }
 
-function SuccessCard({ contestant }: { contestant: DemoContestant }) {
+function SuccessCard({ contestant }: { contestant: ContestantDTO }) {
   const [copied, setCopied] = React.useState(false);
   const router = useRouter();
 
@@ -474,11 +483,11 @@ function SuccessCard({ contestant }: { contestant: DemoContestant }) {
           <CheckCircle2 className="h-7 w-7" />
         </div>
         <h1 className="mt-5 font-display text-3xl md:text-4xl font-bold">
-          You're on the stage list, {contestant.fullName.split(" ")[0]}.
+          You&apos;re on the stage list, {contestant.fullName.split(" ")[0]}.
         </h1>
         <p className="mt-2 text-muted-foreground">
-          This is your demo contestant ID. Save it — you'll use it on the Result
-          Checker.
+          This is your contestant ID. Save it — anyone can use it on the
+          Result Checker.
         </p>
         <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-muted px-5 py-3">
           <span className="font-mono text-3xl md:text-4xl font-bold tracking-widest gradient-text">
@@ -490,7 +499,7 @@ function SuccessCard({ contestant }: { contestant: DemoContestant }) {
           </Button>
         </div>
         <p className="text-[11px] text-muted-foreground mt-2">
-          Demo IDs are random 6-digit numbers stored in your browser only.
+          IDs are unique 6-digit numbers, collision-checked at allocation.
         </p>
 
         <div className="grid sm:grid-cols-3 gap-3 mt-8 text-left">
@@ -500,7 +509,7 @@ function SuccessCard({ contestant }: { contestant: DemoContestant }) {
           >
             <p className="text-sm font-semibold">View profile</p>
             <p className="text-xs text-muted-foreground">
-              Track your demo progress.
+              Track your progress & upload.
             </p>
           </Link>
           <Link

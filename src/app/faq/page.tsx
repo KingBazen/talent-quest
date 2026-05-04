@@ -109,16 +109,15 @@ export default function FaqPage() {
           <div className="flex-1">
             <h3 className="font-display text-xl font-bold">Talk to Stage Bot</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Open the chat in the bottom-right corner. Phase 1 uses a
-              keyword-matched static knowledge base. Phase 2 ships an LLM-backed
-              multilingual assistant with retrieval over rules, contestants, and
-              schedule.
+              Open the chat in the bottom-right corner. Stage Bot answers in
+              English or Amharic from the official knowledge base, and falls
+              through to an LLM when ANTHROPIC_API_KEY is configured.
             </p>
             <div className="mt-3 flex gap-2 text-xs">
               <Badge variant="outline">
                 <Globe className="h-3 w-3 mr-1" /> EN + አማርኛ
               </Badge>
-              <Badge variant="secondary">Demo · static knowledge</Badge>
+              <Badge variant="secondary">Server-backed · LLM-ready</Badge>
             </div>
           </div>
         </div>

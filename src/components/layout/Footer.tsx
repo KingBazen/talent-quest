@@ -39,10 +39,11 @@ export function Footer() {
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm mb-3">Behind the scenes</h4>
+          <h4 className="font-semibold text-sm mb-3">For staff</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/admin-demo" className="hover:text-foreground">Admin demo</Link></li>
-            <li><Link href="/referee-demo" className="hover:text-foreground">Referee demo</Link></li>
+            <li><Link href="/login" className="hover:text-foreground">Sign in</Link></li>
+            <li><Link href="/admin" className="hover:text-foreground">Admin console</Link></li>
+            <li><Link href="/referee" className="hover:text-foreground">Referee dashboard</Link></li>
           </ul>
           <div className="flex gap-2 mt-4">
             <Link
@@ -71,14 +72,8 @@ export function Footer() {
       </div>
       <div className="border-t border-border/40">
         <div className="container py-5 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} TalentQuest. Phase 1 — promotional demo.</p>
-          <p>
-            Payments, video upload, judging & AI chatbot are clearly labeled as
-            <span className="ml-1 inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-semibold">
-              demo / future-production
-            </span>
-            .
-          </p>
+          <p>© {new Date().getFullYear()} TalentQuest. All rights reserved.</p>
+          <p>Built in Ethiopia · Powered by Next.js, SQLite, and bcrypt JWT auth.</p>
         </div>
       </div>
     </footer>

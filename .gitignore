@@ -27,6 +27,16 @@ yarn-error.log*
 .env*.local
 .env
 
+# Local SQLite database (auto-created)
+/data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Local file uploads (dev fallback when Cloudinary is not configured)
+/public/uploads
+
 # Vercel
 .vercel
 

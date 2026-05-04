@@ -25,7 +25,7 @@ export function Hero() {
         >
           <Badge variant="outline" className="mb-6 backdrop-blur-sm bg-background/50">
             <Sparkles className="mr-1 h-3 w-3 text-brand-500" />
-            Phase 1 promotional demo · launching nationally in Phase 2
+            Live · Season 1 registration open
           </Badge>
 
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">

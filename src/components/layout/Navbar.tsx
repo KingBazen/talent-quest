@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, Sparkles, X } from "lucide-react";
+import { Menu, Sparkles, X, LogOut, Shield, Gavel, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/components/auth/SessionProvider";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -21,7 +22,15 @@ const NAV = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { user, loading, logout } = useSession();
+
+  async function handleLogout() {
+    await logout();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -33,9 +42,6 @@ export function Navbar() {
           <span className="hidden sm:inline-block text-lg tracking-tight">
             TalentQuest
           </span>
-          <Badge variant="gradient" className="hidden md:inline-flex">
-            Demo
-          </Badge>
         </Link>
 
         <nav className="hidden lg:flex items-center gap-1 ml-4">
@@ -55,17 +61,48 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="hidden md:inline-flex"
-          >
-            <Link href="/profile">My profile</Link>
-          </Button>
-          <Button asChild variant="gradient" size="sm" className="hidden md:inline-flex">
-            <Link href="/register">Register</Link>
-          </Button>
+          {!loading && user ? (
+            <>
+              {user.role === "admin" && (
+                <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+                  <Link href="/admin">
+                    <Shield className="h-4 w-4 mr-1.5" /> Admin
+                  </Link>
+                </Button>
+              )}
+              {(user.role === "referee" || user.role === "admin") && (
+                <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+                  <Link href="/referee">
+                    <Gavel className="h-4 w-4 mr-1.5" /> Referee
+                  </Link>
+                </Button>
+              )}
+              {user.role === "contestant" && (
+                <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+                  <Link href="/profile">
+                    <User className="h-4 w-4 mr-1.5" /> {user.fullName.split(" ")[0]}
+                  </Link>
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:inline-flex"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-1.5" /> Logout
+              </Button>
+            </>
+          ) : !loading ? (
+            <>
+              <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild variant="gradient" size="sm" className="hidden md:inline-flex">
+                <Link href="/register">Register</Link>
+              </Button>
+            </>
+          ) : null}
           <Button
             variant="ghost"
             size="icon"
@@ -95,16 +132,40 @@ export function Navbar() {
               </Link>
             ))}
             <div className="grid grid-cols-2 gap-2 pt-2">
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/profile" onClick={() => setOpen(false)}>
-                  My profile
-                </Link>
-              </Button>
-              <Button asChild variant="gradient" size="sm">
-                <Link href="/register" onClick={() => setOpen(false)}>
-                  Register
-                </Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link
+                      href={
+                        user.role === "admin"
+                          ? "/admin"
+                          : user.role === "referee"
+                          ? "/referee"
+                          : "/profile"
+                      }
+                      onClick={() => setOpen(false)}
+                    >
+                      My dashboard
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      Login
+                    </Link>
+                  </Button>
+                  <Button asChild variant="gradient" size="sm">
+                    <Link href="/register" onClick={() => setOpen(false)}>
+                      Register
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
