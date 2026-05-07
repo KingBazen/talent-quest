@@ -1,4 +1,4 @@
-# TalentQuest
+# TalentQuest *(rebrand to Bling Records Show in Phase 1 — see [docs/full-development-roadmap.md](docs/full-development-roadmap.md))*
 
 > Ethiopia's stage for the next generation of singers, dancers, comedians,
 > actors, instrumentalists, and one-of-a-kind talents.
@@ -9,64 +9,77 @@ Codespaces-ready dev environment.
 
 ---
 
+## ⚠️ Security — read before contributing
+
+> **Never commit `.env`, `.env.local`, or any file with real credentials.**
+> Real secrets live only in the host's environment-variable UI
+> (Vercel → Project → Settings → Environment Variables, scoped per
+> environment). `.env.example` is a placeholder template.
+>
+> If you ever paste a real secret into a tracked file: **rotate it with the
+> provider first**, then remove it. See
+> [docs/agent-execution-rules.md](docs/agent-execution-rules.md) §2 and
+> [docs/bling-records-show-mvp-ux-technical-scope.md](docs/bling-records-show-mvp-ux-technical-scope.md) §0.
+
+---
+
 ## What's in the box
 
 | Layer            | Implementation                                                      |
 | ---------------- | ------------------------------------------------------------------- |
 | Frontend         | Next.js 14 App Router · Tailwind · shadcn/ui · Framer Motion        |
 | API              | Next.js Route Handlers (Node runtime) under `/api/*`                |
-| Database         | SQLite (via `better-sqlite3`) — file at `data/talentquest.db`       |
+| Database         | **Postgres on Neon serverless** (`@neondatabase/serverless` + `ws`) |
 | Auth             | bcrypt password hashing · HS256 JWT in HTTP-only cookie · `jose`    |
 | RBAC             | `contestant`, `referee`, `admin` roles · edge middleware on `/admin` and `/referee` |
+| Rate-limiting    | In-memory limiter on `/api/auth/login` (10/15min/IP) and `/api/contestants/[id]` (30/5min/IP) — production needs Upstash (P0-T009b) |
 | Payments         | Telebirr / AdmasPay HMAC-signed init + webhook (stub mode without creds) |
-| Uploads          | Cloudinary signed direct-upload (dev fallback to local `/public/uploads`) |
+| Uploads          | Cloudinary signed direct-upload intent (client wiring lands in Phase 3) |
 | Chatbot          | Bilingual EN/AM static FAQ matcher · LLM fallthrough when `ANTHROPIC_API_KEY` is set |
 
-The full Phase-2 product spec, judging rubric, and pipeline plans still
-live in [`docs/`](docs/).
+The full product / UX / roadmap docs live in [`docs/`](docs/) — start with
+[docs/full-ux-ecosystem-documentation.md](docs/full-ux-ecosystem-documentation.md)
+and [docs/task-tracker.md](docs/task-tracker.md).
 
 ---
 
-## Quick start (GitHub Codespaces)
+## Quick start
 
-The `.devcontainer/devcontainer.json` does the work for you — open the repo
-in a Codespace and the container will:
+You need:
 
-1. `npm install`
-2. `npm run db:init` (apply migrations)
-3. `npm run db:seed` (default admin/referee + four demo contestants)
-
-Then start the app:
+- Node.js 20.6+ (uses `process.loadEnvFile`).
+- A Postgres connection string. Easiest: a free [Neon](https://neon.tech)
+  project. Use the **pooled** URL (host ends with
+  `-pooler.<region>.aws.neon.tech`).
 
 ```bash
-npm run dev      # http://localhost:3000  (auto-forwarded)
-```
-
-Seeded test accounts (override via env vars before seeding):
-
-| Role      | Email                          | Password     |
-| --------- | ------------------------------ | ------------ |
-| Admin     | `admin@talentquest.local`      | `Admin1234!` |
-| Referee   | `referee@talentquest.local`    | `Referee1234!` |
-| Contestant| `hanna@example.com`            | `Demo1234!`  |
-| Contestant| `selam@example.com`            | `Demo1234!`  |
-| Contestant| `yonas@example.com`            | `Demo1234!`  |
-| Contestant| `mikiyas@example.com`          | `Demo1234!`  |
-
----
-
-## Quick start (local, outside Codespaces)
-
-```bash
+# 1. Clone, then create your local env file from the template:
 cp .env.example .env.local
-# Edit .env.local — at minimum, set JWT_SECRET to a long random string.
+
+# 2. Edit .env.local — at minimum:
+#    - JWT_SECRET   (generate with the command in .env.example)
+#    - DATABASE_URL (your Neon pooled connection string)
+#    - SEED_*_PASSWORD env vars (set strong dev passwords)
+
 npm install
-npm run db:init
-npm run db:seed
-npm run dev
+npm run db:init   # idempotent migrations
+npm run db:seed   # admin + referee + 4 demo contestants
+npm run dev       # http://localhost:3000
 ```
 
-Node.js 20.6+ is required (uses `process.loadEnvFile`).
+Seed accounts (passwords come from the `SEED_*_PASSWORD` env vars you set):
+
+| Role        | Email                         |
+| ----------- | ----------------------------- |
+| Admin       | `$SEED_ADMIN_EMAIL`           |
+| Referee     | `$SEED_REFEREE_EMAIL`         |
+| Contestant  | `hanna@example.com`           |
+| Contestant  | `selam@example.com`           |
+| Contestant  | `yonas@example.com`           |
+| Contestant  | `mikiyas@example.com`         |
+
+In **dev only**, the `/login` page renders a hint listing these emails (the
+block is hidden in production builds via `process.env.NODE_ENV` check).
 
 ---
 
@@ -80,7 +93,7 @@ npm run lint
 npm run type-check
 npm run db:init      # apply schema migrations (idempotent)
 npm run db:seed      # insert default admin/referee + demo contestants
-npm run db:reset     # delete data/talentquest.db, re-init, re-seed
+npm run db:reset     # drop + recreate the schema, then re-seed
 ```
 
 ---
@@ -117,73 +130,87 @@ src/
 │   ├── home/, layout/, ui/
 ├── data/                     # Static lookups (categories, FAQ, judging, schedule)
 ├── lib/
-│   ├── db.ts                 # better-sqlite3 + schema migrations
+│   ├── db.ts                 # Neon Postgres pool + idempotent migrations
 │   ├── auth.ts               # bcrypt, JWT (jose), session cookie helpers
 │   ├── api.ts                # Zod parse + error envelope
+│   ├── rate-limit.ts         # in-memory rate limiter (Upstash-ready)
 │   ├── contestants.ts        # contestant + submission repos
 │   ├── scores.ts             # per-criterion upsert + aggregation
 │   ├── payments.ts           # Telebirr/AdmasPay signed init + webhook verify
 │   ├── uploads.ts            # Cloudinary signed direct-upload intent
-│   ├── dto.ts (server)       # row → public DTO
+│   ├── dto.ts (server)       # row → public DTO (anonymized)
 │   └── dto-types.ts (client) # client-safe DTO type mirrors
 ├── middleware.ts             # /admin and /referee role enforcement
 └── types/                    # Shared TS types
 
 scripts/
 ├── db-init.ts                # apply migrations
+├── db-reset.ts               # drop + recreate schema
 └── db-seed.ts                # seed admin/referee/contestants
-
-data/                         # gitignored — SQLite file lives here
 ```
 
 ---
 
 ## Configuration
 
-All env vars are documented in `.env.example`. The minimum required is:
+All env vars are documented in [`.env.example`](.env.example). Minimum
+required for a working dev environment:
 
 ```env
-JWT_SECRET=<32+ random chars>
+JWT_SECRET=<48+ random bytes, base64url>
+DATABASE_URL=postgresql://...neon...?sslmode=require
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Optional — leave blank and the system runs in graceful stub mode:
+Optional — leave blank and the corresponding feature falls back to stub /
+static mode:
 
-| Var                          | Effect                                                  |
-| ---------------------------- | ------------------------------------------------------- |
-| `TELEBIRR_*`                 | Real Telebirr/AdmasPay init + HMAC-signed webhook       |
-| `CLOUDINARY_*`               | Signed direct-upload for videos                         |
-| `ANTHROPIC_API_KEY`          | Replaces static chatbot with Claude (`-haiku-4-5`)      |
-| `SEED_ADMIN_*` / `SEED_REFEREE_*` | Custom seed credentials                            |
-| `DATABASE_PATH`              | Override SQLite file location                           |
-| `NEXT_PUBLIC_SITE_URL`       | Used in sitemap and email/payment return URLs           |
+| Var                                  | Effect                                                       |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `ADMASPAY_CHECKOUT_URL`              | Hosted-checkout flow for the audition fee                    |
+| `TELEBIRR_*`                         | Full Telebirr / AdmasPay API + HMAC-signed webhook           |
+| `CLOUDINARY_*`                       | Signed direct upload for audition videos                     |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | Replaces static chatbot with Claude                       |
+| `SEED_ADMIN_*` / `SEED_REFEREE_*`    | Local seed credentials (used by `npm run db:seed`)           |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN`  | Production-grade rate limiter (otherwise in-memory only)     |
 
 ---
 
 ## Deployment
 
-See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full guide. Headlines:
+Recommended target: **Vercel + Neon Postgres**. Headlines:
 
-- **Codespaces / Render / Fly / a VPS**: SQLite works out of the box. Mount
-  a persistent volume at `/app/data` and point `DATABASE_PATH` at it.
-- **Vercel**: serverless filesystems are read-only and cold-start, so
-  switch to a managed Postgres. The codebase isolates SQL in `src/lib/db.ts`
-  and the small set of repo modules — replacing `better-sqlite3` with `pg`
-  or `@vercel/postgres` is a contained change.
-- Always set `JWT_SECRET` to a 32+ char random value in production.
+- Set every required env var in Vercel → Settings → Environment Variables.
+  Never commit real values.
+- Neon's pooled connection string works for serverless. The lazy pool in
+  [`src/lib/db.ts`](src/lib/db.ts) avoids cold-start at module load.
 - Cloudinary and Telebirr live mode require the relevant env vars; without
   them the API responds in stub mode (recorded locally, useful for QA).
+- `JWT_SECRET` must be ≥ 24 characters (the auth module enforces this).
+  Generate with the `node -e "..."` command in `.env.example`.
+- Before launch, swap the in-memory rate limiter for Upstash Redis (see
+  `UPSTASH_*` env vars and `src/lib/rate-limit.ts`).
+
+The full deployment + ops guide lives in
+[`docs/DEPLOY_VERCEL_NEON.md`](docs/DEPLOY_VERCEL_NEON.md) and
+[`docs/admin-and-operations-plan.md`](docs/admin-and-operations-plan.md).
 
 ---
 
 ## Security highlights
 
 - Passwords hashed with bcrypt (cost 10) — never stored or logged in plain text
-- JWT sessions signed HS256, HTTP-only cookies, `Secure` flag in production, 14-day TTL
+- JWT sessions signed HS256, HTTP-only cookies, `Secure` in production, 14-day TTL
 - `/admin` and `/referee` enforced at the **edge** by Next.js middleware so
   unauthenticated users never reach the page handler
+- `/api/auth/login` rate-limited to 10 failures / 15 min / IP
+- `/api/contestants/[id]` rate-limited to 30 lookups / 5 min / IP
+- Public 6-digit lookup never returns full name, email, phone, or DOB —
+  only stage name (or initials) + city + status + progress
 - Contestant ID generation uses `crypto.randomInt` and collision-checks the DB
 - Telebirr webhook signature is verified with `crypto.timingSafeEqual` —
   unsigned or mismatched callbacks are rejected with 401 so the provider retries
+- Seed-account hint on `/login` is hidden in production builds (`NODE_ENV` gated)
 
 ---
 

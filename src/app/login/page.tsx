@@ -39,7 +39,7 @@ export default function LoginPage() {
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/profile";
+  const next = params.get("next") || "/contestant/dashboard";
   const { refresh } = useSession();
   const [error, setError] = React.useState<string | null>(null);
   const {
@@ -131,28 +131,37 @@ function LoginInner() {
           {isSubmitting ? "Signing in…" : "Sign in"}
           <LogIn className="ml-2 h-4 w-4" />
         </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <Link
+            className="hover:text-foreground"
+            href="/forgot-password"
+          >
+            Forgot password?
+          </Link>
           <Link
             className="text-foreground underline hover:text-brand-500"
             href="/register"
           >
-            Register here
+            No account? Apply
           </Link>
-        </p>
+        </div>
       </motion.form>
 
-      <div className="mt-6 rounded-xl bg-muted/40 border border-border/60 p-4 text-xs text-muted-foreground">
-        <p className="font-semibold text-foreground mb-1">
-          <Sparkles className="inline h-3 w-3 mr-1" /> Seeded test accounts
-        </p>
-        <ul className="space-y-1 font-mono">
-          <li>admin@talentquest.local / Admin1234!</li>
-          <li>referee@talentquest.local / Referee1234!</li>
-          <li>hanna@example.com / Demo1234!</li>
-        </ul>
-        <p className="mt-2">Change these in production via env vars.</p>
-      </div>
+      {process.env.NODE_ENV !== "production" && (
+        <div className="mt-6 rounded-xl bg-muted/40 border border-border/60 p-4 text-xs text-muted-foreground">
+          <p className="font-semibold text-foreground mb-1">
+            <Sparkles className="inline h-3 w-3 mr-1" /> Seeded dev accounts
+          </p>
+          <ul className="space-y-1 font-mono">
+            <li>admin@example.local / (SEED_ADMIN_PASSWORD)</li>
+            <li>referee@example.local / (SEED_REFEREE_PASSWORD)</li>
+            <li>hanna@example.com / Demo1234!</li>
+          </ul>
+          <p className="mt-2">
+            Visible in development only. Set strong passwords via SEED_*_PASSWORD env vars.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -105,7 +105,7 @@ export function ChatbotWidget() {
               transition={{ duration: 0.2 }}
               className="mb-3 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
             >
-              <div className="bg-gradient-to-r from-brand-500 via-fuchsia-500 to-cyan-400 p-4 text-white">
+              <div className="bg-gradient-to-r from-brand-300 via-brand-500 to-brand-700 p-4 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20">

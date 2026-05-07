@@ -55,10 +55,10 @@ async function ensureContestant(opts: {
   age: number;
   city: string;
   category:
+    | "rap"
     | "singing"
-    | "dancing"
-    | "acting"
-    | "comedy"
+    | "songwriter"
+    | "performance"
     | "instruments"
     | "other";
   experience: string;
@@ -92,7 +92,9 @@ async function ensureContestant(opts: {
     category: opts.category,
     experience: opts.experience,
     bio: opts.bio,
-    agreedToTerms: true,
+    agreedToRules: true,
+    agreedToRights: true,
+    agreedToAge: true,
   });
   console.log(`  ✓ created contestant ${opts.email} (id ${c.id})`);
 }
@@ -101,14 +103,14 @@ async function main() {
   console.log("[db-seed] seeding…");
 
   await ensureUser({
-    email: process.env.SEED_ADMIN_EMAIL || "admin@talentquest.local",
+    email: process.env.SEED_ADMIN_EMAIL || "admin@blingshow.local",
     password: process.env.SEED_ADMIN_PASSWORD || "Admin1234!",
-    fullName: "TalentQuest Admin",
+    fullName: "Bling Records Show Admin",
     role: "admin",
   });
 
   await ensureUser({
-    email: process.env.SEED_REFEREE_EMAIL || "referee@talentquest.local",
+    email: process.env.SEED_REFEREE_EMAIL || "referee@blingshow.local",
     password: process.env.SEED_REFEREE_PASSWORD || "Referee1234!",
     fullName: "Senior Referee",
     role: "referee",
@@ -134,7 +136,7 @@ async function main() {
     phone: "+251911000002",
     age: 25,
     city: "Lalibela",
-    category: "dancing",
+    category: "performance",
     experience: "advanced",
     bio: "Five-piece Eskista crew putting modern footwork on tradition.",
   });
@@ -158,23 +160,22 @@ async function main() {
     phone: "+251911000004",
     age: 27,
     city: "Addis Ababa",
-    category: "comedy",
+    category: "rap",
     experience: "intermediate",
-    bio: "Stand-up comedian — taxi life, market chaos, dry observational humor.",
+    bio: "Bedroom-rap MC writing Amharic-English bars over boom-bap and drill beats.",
   });
 
   console.log("[db-seed] done.");
+  // Print emails only — the password is whatever the runner set via the
+  // SEED_*_PASSWORD env var, so they already know it. Echoing it back here
+  // would leak it to terminal scrollback / CI logs / shoulder surfers.
   console.log(
     "\n  Admin:    " +
-      (process.env.SEED_ADMIN_EMAIL || "admin@talentquest.local") +
-      " / " +
-      (process.env.SEED_ADMIN_PASSWORD || "Admin1234!")
+      (process.env.SEED_ADMIN_EMAIL || "admin@blingshow.local")
   );
   console.log(
     "  Referee:  " +
-      (process.env.SEED_REFEREE_EMAIL || "referee@talentquest.local") +
-      " / " +
-      (process.env.SEED_REFEREE_PASSWORD || "Referee1234!") +
+      (process.env.SEED_REFEREE_EMAIL || "referee@blingshow.local") +
       "\n"
   );
 

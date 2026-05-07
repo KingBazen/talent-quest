@@ -1,5 +1,11 @@
 import crypto from "node:crypto";
-import { query, queryOne, tx, type ScoreRow } from "./db";
+import {
+  query,
+  queryOne,
+  tx,
+  type ScoreNoteRow,
+  type ScoreRow,
+} from "./db";
 import { JUDGING_CRITERIA } from "@/data/judging";
 
 export async function upsertScores(input: {
@@ -7,6 +13,7 @@ export async function upsertScores(input: {
   refereeUserId: string;
   scores: Record<string, number>;
   notes?: string;
+  publicNotes?: string;
 }): Promise<void> {
   await tx(async ({ q }) => {
     for (const c of JUDGING_CRITERIA) {
@@ -23,16 +30,52 @@ export async function upsertScores(input: {
         [id, input.submissionId, input.refereeUserId, c.key, points, c.weight]
       );
     }
-    if (typeof input.notes === "string") {
+    // Persist notes if either column is provided. We accept empty strings as
+    // a deliberate clear (the row stays in place; both columns can hold "").
+    if (
+      typeof input.notes === "string" ||
+      typeof input.publicNotes === "string"
+    ) {
       await q(
-        `INSERT INTO score_notes (submission_id, referee_user_id, notes, updated_at)
-         VALUES (?, ?, ?, (CURRENT_TIMESTAMP::text))
+        `INSERT INTO score_notes (submission_id, referee_user_id, notes, public_notes, updated_at)
+         VALUES (?, ?, ?, ?, (CURRENT_TIMESTAMP::text))
          ON CONFLICT (submission_id, referee_user_id)
-         DO UPDATE SET notes = excluded.notes, updated_at = (CURRENT_TIMESTAMP::text)`,
-        [input.submissionId, input.refereeUserId, input.notes]
+         DO UPDATE SET notes = COALESCE(excluded.notes, score_notes.notes),
+                       public_notes = COALESCE(excluded.public_notes, score_notes.public_notes),
+                       updated_at = (CURRENT_TIMESTAMP::text)`,
+        [
+          input.submissionId,
+          input.refereeUserId,
+          input.notes ?? null,
+          input.publicNotes ?? null,
+        ]
       );
     }
   });
+}
+
+export async function getMyScoreNote(
+  refereeUserId: string,
+  submissionId: string
+): Promise<ScoreNoteRow | undefined> {
+  return queryOne<ScoreNoteRow>(
+    `SELECT * FROM score_notes
+      WHERE referee_user_id = ? AND submission_id = ?`,
+    [refereeUserId, submissionId]
+  );
+}
+
+/** Aggregate of every public-facing note for a submission. Used by the
+ *  contestant-facing result view to surface what referees have said. */
+export async function listPublicNotesForSubmission(
+  submissionId: string
+): Promise<{ public_notes: string; updated_at: string }[]> {
+  return query<{ public_notes: string; updated_at: string }>(
+    `SELECT public_notes, updated_at FROM score_notes
+      WHERE submission_id = ? AND public_notes IS NOT NULL AND public_notes <> ''
+      ORDER BY updated_at DESC`,
+    [submissionId]
+  );
 }
 
 export interface AggregateScore {

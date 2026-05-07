@@ -1,8 +1,8 @@
 export type TalentCategoryId =
+  | "rap"
   | "singing"
-  | "dancing"
-  | "acting"
-  | "comedy"
+  | "songwriter"
+  | "performance"
   | "instruments"
   | "other";
 
@@ -72,8 +72,5 @@ export interface ShowcaseClip {
   city: string;
   thumbnail: string;
   videoUrl?: string;
-  youtubeId?: string;
   durationSec: number;
-  views: number;
-  likes: number;
 }

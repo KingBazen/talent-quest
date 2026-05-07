@@ -11,7 +11,8 @@
     "type-check": "tsc --noEmit",
     "db:init": "tsx --env-file=.env.local scripts/db-init.ts",
     "db:seed": "tsx --env-file=.env.local scripts/db-seed.ts",
-    "db:reset": "tsx --env-file=.env.local scripts/db-reset.ts && npm run db:seed"
+    "db:reset": "tsx --env-file=.env.local scripts/db-reset.ts && npm run db:seed",
+    "qa:smoke": "tsx --env-file=.env.local scripts/qa-smoke.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -28,6 +29,8 @@
     "@radix-ui/react-toast": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@types/ws": "^8.18.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

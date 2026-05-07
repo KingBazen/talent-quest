@@ -1,4 +1,4 @@
-// Drops every TalentQuest table and re-creates the schema. DEV USE ONLY.
+// Drops every Bling Records Show table and re-creates the schema. DEV USE ONLY.
 // Never run against a production DATABASE_URL.
 try { process.loadEnvFile(".env.local"); } catch {}
 try { process.loadEnvFile(".env"); } catch {}

@@ -4,48 +4,52 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 339 100% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 270 95% 75%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    /* Light mode — warm cream paper, gold accents. */
+    --background: 45 60% 99%;
+    --foreground: 45 25% 8%;
+    --card: 45 50% 97%;
+    --card-foreground: 45 25% 8%;
+    --popover: 45 50% 99%;
+    --popover-foreground: 45 25% 8%;
+    --primary: 45 92% 47%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 45 35% 92%;
+    --secondary-foreground: 45 25% 8%;
+    --muted: 45 25% 93%;
+    --muted-foreground: 45 12% 35%;
+    --accent: 45 92% 47%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 84.2% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 339 100% 58%;
+    --border: 45 25% 88%;
+    --input: 45 25% 88%;
+    --ring: 45 92% 47%;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 8% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 5%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 339 100% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 270 95% 75%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    /* Dark mode — pure black stage with gold light. */
+    --background: 0 0% 4%;
+    --foreground: 45 30% 96%;
+    --card: 45 8% 7%;
+    --card-foreground: 45 30% 96%;
+    --popover: 45 8% 6%;
+    --popover-foreground: 45 30% 96%;
+    --primary: 45 92% 53%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 45 8% 14%;
+    --secondary-foreground: 45 30% 96%;
+    --muted: 45 6% 13%;
+    /* Tightened from 62 % L → 72 % L (2026-05-06, P1-T020) so muted-foreground
+       text on the dark-mode background (`0 0% 4 %`) clears WCAG AA contrast. */
+    --muted-foreground: 45 14% 72%;
+    --accent: 45 92% 53%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 18%;
-    --input: 240 3.7% 18%;
-    --ring: 339 100% 58%;
+    --border: 45 8% 18%;
+    --input: 45 8% 18%;
+    --ring: 45 92% 53%;
   }
 }
 
@@ -67,13 +71,15 @@
     text-wrap: balance;
   }
 
+  /* Metallic gold shimmer — bright yellow → rich gold → deep amber. */
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-500 via-fuchsia-500 to-cyan-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-300 via-brand-500 to-brand-700;
   }
 
   .gradient-border {
-    background: linear-gradient(var(--background), var(--background)) padding-box,
-      linear-gradient(135deg, #ff2773, #8b5cf6, #06b6d4) border-box;
+    background: linear-gradient(hsl(var(--background)), hsl(var(--background)))
+        padding-box,
+      linear-gradient(135deg, #facc15, #eab308, #422006) border-box;
     border: 2px solid transparent;
   }
 
@@ -81,9 +87,10 @@
     @apply bg-background/60 backdrop-blur-xl border border-white/10;
   }
 
+  /* Gold spotlight glow on dark stage. */
   .stage-glow {
-    box-shadow: 0 0 80px -10px rgba(255, 39, 115, 0.4),
-      0 0 120px -30px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 80px -10px rgba(234, 179, 8, 0.45),
+      0 0 120px -30px rgba(250, 204, 21, 0.3);
   }
 
   .scrollbar-hide::-webkit-scrollbar {

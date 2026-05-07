@@ -2,17 +2,17 @@ import type { FaqEntry } from "@/types";
 
 export const FAQ_ENTRIES: FaqEntry[] = [
   {
-    q: "Who can register for TalentQuest?",
+    q: "Who can register for The Bling Records Show?",
     a: "Anyone aged 13 and above can register. Contestants under 18 will need a parent or legal guardian to co-sign during the live audition.",
-    qAm: "ለታለንት ኩዌስት ማን ሊመዘገብ ይችላል?",
+    qAm: "ለBling Records Show ማን ሊመዘገብ ይችላል?",
     aAm: "ከ13 ዓመት እና ከዚያ በላይ የሆነ ማንም ሰው መመዝገብ ይችላል። ከ18 ዓመት በታች የሆኑ ተወዳዳሪዎች በቀጥታ የመጠቆሚያ ሙከራ ጊዜ ወላጅ ወይም ሕጋዊ ጠባቂ ፈርመው ማቅረብ አለባቸው።",
     tags: ["eligibility", "age", "register"],
   },
   {
     q: "Is registration free?",
-    a: "Initial account creation is free. The competition entry fee (50 ETB) is collected via Telebirr (AdmasPay/Paylib) when you submit your video. Any fee is shown clearly before payment.",
+    a: "Initial account creation is free. The competition entry fee (500 ETB) is collected via AdmasPay (Telebirr / M-Pesa / CBE Birr) or by uploading a bank-transfer receipt screenshot before you can upload your audition video. Any fee is shown clearly before payment.",
     qAm: "መመዝገብ ነፃ ነው ወይ?",
-    aAm: "መመዝገብ ነፃ ነው። የውድድር መግቢያ ክፍያ (50 ብር) ቪዲዮ ሲያስገቡ በቴሌብር ይከፈላል።",
+    aAm: "መመዝገብ ነፃ ነው። የውድድር መግቢያ ክፍያ (500 ብር) ቪዲዮ ከመጫንዎ በፊት በAdmasPay (ቴሌብር / ኤም-ፔሳ / ሲቢኢ ብር) ወይም በባንክ ዝውውር ደረሰኝ ይከፈላል።",
     tags: ["payment", "telebirr", "fees"],
   },
   {

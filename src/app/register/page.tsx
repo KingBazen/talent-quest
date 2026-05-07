@@ -38,38 +38,73 @@ import { useSession } from "@/components/auth/SessionProvider";
 import type { ContestantDTO } from "@/lib/dto-types";
 import type { TalentCategoryId } from "@/types";
 
-const schema = z.object({
-  fullName: z.string().min(2, "Please enter your full name"),
-  stageName: z.string().optional(),
-  email: z.string().email("Enter a valid email"),
-  password: z
-    .string()
-    .min(8, "At least 8 characters")
-    .max(72, "Maximum 72 characters"),
-  phone: z
-    .string()
-    .min(9, "Enter a valid phone number")
-    .regex(/^[\d+\-\s()]+$/, "Numbers only"),
-  age: z
-    .coerce.number({ invalid_type_error: "Enter your age" })
-    .int()
-    .min(13, "Must be 13 or older")
-    .max(99, "Enter a valid age"),
-  city: z.string().min(2, "Where are you based?"),
-  category: z.enum(
-    ["singing", "dancing", "acting", "comedy", "instruments", "other"],
-    { errorMap: () => ({ message: "Pick your category" }) }
-  ),
-  experience: z.string().min(1, "Tell us your level"),
-  bio: z.string().min(20, "Add a short bio (at least 20 characters)").max(500),
-  agreedToTerms: z
-    .boolean()
-    .refine((v) => v === true, { message: "You must agree to the terms" }),
-});
+// ─── Schema ──────────────────────────────────────────────────────────────────
+
+const schema = z
+  .object({
+    fullName: z.string().min(2, "Please enter your full name"),
+    stageName: z.string().optional(),
+    email: z.string().email("Enter a valid email"),
+    password: z
+      .string()
+      .min(8, "At least 8 characters")
+      .max(72, "Maximum 72 characters"),
+    phone: z
+      .string()
+      .min(9, "Enter a valid phone number")
+      .regex(/^[\d+\-\s()]+$/, "Numbers only"),
+    dob: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Date format YYYY-MM-DD")
+      .refine((v) => {
+        const d = new Date(v);
+        return !isNaN(d.getTime()) && d < new Date();
+      }, "Date must be in the past")
+      .refine((v) => {
+        const age = ageFromDob(v);
+        return age >= 13 && age <= 99;
+      }, "You must be between 13 and 99"),
+    city: z.string().min(2, "Where are you based?"),
+    country: z.string().min(2).max(64).default("ET"),
+    category: z.enum(
+      ["rap", "singing", "songwriter", "performance", "instruments", "other"],
+      { errorMap: () => ({ message: "Pick your music category" }) }
+    ),
+    experience: z.string().min(1, "Tell us your level"),
+    bio: z.string().min(20, "Add a short bio (at least 20 characters)").max(500),
+    socialIg: z.string().max(120).optional().or(z.literal("")),
+    socialTt: z.string().max(120).optional().or(z.literal("")),
+    socialYt: z.string().max(120).optional().or(z.literal("")),
+    agreedToRules: z
+      .boolean()
+      .refine((v) => v === true, { message: "You must accept the entry rules" }),
+    agreedToRights: z
+      .boolean()
+      .refine((v) => v === true, {
+        message: "You must accept the content licensing terms",
+      }),
+    agreedToAge: z
+      .boolean()
+      .refine((v) => v === true, {
+        message: "You must confirm your age (and guardian permission if under 18)",
+      }),
+  });
 
 type FormValues = z.infer<typeof schema>;
 
 const TOTAL_STEPS = 3;
+const DRAFT_KEY = "brs.register.draft.v1";
+
+function ageFromDob(dob: string): number {
+  const d = new Date(dob);
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age -= 1;
+  return age;
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -87,12 +122,18 @@ export default function RegisterPage() {
       email: "",
       password: "",
       phone: "",
-      age: 18 as unknown as number,
+      dob: "",
       city: "",
+      country: "ET",
       category: undefined,
       experience: "",
       bio: "",
-      agreedToTerms: false,
+      socialIg: "",
+      socialTt: "",
+      socialYt: "",
+      agreedToRules: false,
+      agreedToRights: false,
+      agreedToAge: false,
     },
   });
 
@@ -103,11 +144,65 @@ export default function RegisterPage() {
     trigger,
     setValue,
     watch,
+    reset,
+    getValues,
   } = form;
 
+  // ─── LocalStorage save-resume (P2-T009) ────────────────────────────────────
+  // Persist non-sensitive fields between page reloads. We deliberately exclude
+  // `password` and `agreedTo*` so a shared device doesn't auto-resume into a
+  // pre-checked consent state.
+  const SENSITIVE: (keyof FormValues)[] = [
+    "password",
+    "agreedToRules",
+    "agreedToRights",
+    "agreedToAge",
+  ];
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as Partial<FormValues>;
+      const safe: Partial<FormValues> = { ...draft };
+      for (const k of SENSITIVE) delete safe[k];
+      reset({ ...getValues(), ...safe } as FormValues);
+    } catch {
+      /* corrupt draft — ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    const sub = watch((v) => {
+      if (typeof window === "undefined") return;
+      const safe: Record<string, unknown> = { ...v };
+      for (const k of SENSITIVE) delete safe[k];
+      try {
+        window.localStorage.setItem(DRAFT_KEY, JSON.stringify(safe));
+      } catch {
+        /* quota / private mode — ignore */
+      }
+    });
+    return () => sub.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watch]);
+
+  function clearDraft() {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // ─── Step navigation ───────────────────────────────────────────────────────
   async function next() {
     let fields: (keyof FormValues)[] = [];
-    if (step === 1) fields = ["fullName", "email", "password", "phone", "age", "city"];
+    if (step === 1)
+      fields = ["fullName", "email", "password", "phone", "dob", "city"];
     if (step === 2) fields = ["category", "experience", "bio"];
     const ok = await trigger(fields);
     if (!ok) return;
@@ -123,9 +218,13 @@ export default function RegisterPage() {
     try {
       const res = await api.post<{ contestant: ContestantDTO }>(
         "/api/auth/register",
-        values
+        {
+          ...values,
+          age: ageFromDob(values.dob),
+        }
       );
       await refresh();
+      clearDraft();
       setSubmitted(res.contestant);
     } catch (e) {
       setServerError(
@@ -136,6 +235,8 @@ export default function RegisterPage() {
 
   const watched = watch();
   const selectedCat = TALENT_CATEGORIES.find((c) => c.id === watched.category);
+  const computedAge = watched.dob ? ageFromDob(watched.dob) : null;
+  const isMinor = computedAge !== null && computedAge < 18;
 
   if (submitted) {
     return <SuccessCard contestant={submitted} />;
@@ -146,14 +247,14 @@ export default function RegisterPage() {
       <div className="mb-8">
         <Badge variant="outline" className="mb-3">
           <Sparkles className="h-3 w-3 mr-1 text-brand-500" />
-          Live registration · secure account
+          Live application · secure account
         </Badge>
         <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
-          Register your <span className="gradient-text">talent</span>.
+          Apply to <span className="gradient-text">The Bling Records Show</span>.
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Three short steps. Your contestant ID is created instantly and tied
-          to your account so you can log back in any time.
+          Three short steps. Your 6-digit contestant ID is created instantly
+          and tied to your account so you can log back in any time.
         </p>
       </div>
 
@@ -162,7 +263,7 @@ export default function RegisterPage() {
           <span>Step {step} of {TOTAL_STEPS}</span>
           <span className="text-muted-foreground">
             {step === 1 && "About you"}
-            {step === 2 && "Your talent"}
+            {step === 2 && "Your music"}
             {step === 3 && "Confirm & submit"}
           </span>
         </div>
@@ -215,13 +316,19 @@ export default function RegisterPage() {
               />
             </Field>
             <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Age" error={errors.age?.message}>
+              <Field
+                label="Date of birth"
+                hint={
+                  computedAge !== null
+                    ? `Age ${computedAge}${isMinor ? " — guardian consent required" : ""}`
+                    : "YYYY-MM-DD"
+                }
+                error={errors.dob?.message}
+              >
                 <Input
-                  type="number"
+                  type="date"
                   inputMode="numeric"
-                  min={13}
-                  max={99}
-                  {...register("age")}
+                  {...register("dob")}
                 />
               </Field>
               <Field label="City" error={errors.city?.message}>
@@ -237,7 +344,11 @@ export default function RegisterPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-border/60 bg-card p-6 space-y-5"
           >
-            <Field label="Talent category" error={errors.category?.message}>
+            <Field
+              label="Music category"
+              hint="Pick the one your strongest performance lives in"
+              error={errors.category?.message}
+            >
               <Select
                 value={watched.category}
                 onValueChange={(v) =>
@@ -296,18 +407,44 @@ export default function RegisterPage() {
 
             <Field
               label="Short bio"
-              hint="What makes your talent special? (20–500 chars)"
+              hint="What makes your sound yours? (20–500 chars)"
               error={errors.bio?.message}
             >
               <Textarea
                 rows={5}
-                placeholder="I'm a 22-year-old singer-songwriter from Addis Ababa..."
+                placeholder="I'm a 22-year-old singer-songwriter from Addis Ababa…"
                 {...register("bio")}
               />
               <div className="text-right text-[11px] text-muted-foreground mt-1">
                 {watched.bio?.length || 0}/500
               </div>
             </Field>
+
+            <div className="rounded-xl border border-border/60 bg-background p-4 space-y-3">
+              <p className="text-sm font-semibold">
+                Socials (optional — helps the panel see more of your work)
+              </p>
+              <div className="grid sm:grid-cols-3 gap-3">
+                <Field label="Instagram">
+                  <Input
+                    placeholder="@handle or URL"
+                    {...register("socialIg")}
+                  />
+                </Field>
+                <Field label="TikTok">
+                  <Input
+                    placeholder="@handle or URL"
+                    {...register("socialTt")}
+                  />
+                </Field>
+                <Field label="YouTube">
+                  <Input
+                    placeholder="channel or URL"
+                    {...register("socialYt")}
+                  />
+                </Field>
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -325,7 +462,12 @@ export default function RegisterPage() {
                   ["Stage name", watched.stageName || "—"],
                   ["Email", watched.email],
                   ["Phone", watched.phone],
-                  ["Age", watched.age],
+                  [
+                    "DOB · age",
+                    watched.dob
+                      ? `${watched.dob} · ${ageFromDob(watched.dob)}`
+                      : "—",
+                  ],
                   ["City", watched.city],
                   ["Category", selectedCat?.name],
                   ["Experience", watched.experience],
@@ -335,7 +477,9 @@ export default function RegisterPage() {
                     className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-background px-3 py-2"
                   >
                     <dt className="text-muted-foreground">{k}</dt>
-                    <dd className="font-medium text-right">{String(v ?? "—")}</dd>
+                    <dd className="font-medium text-right">
+                      {String(v ?? "—")}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -348,27 +492,69 @@ export default function RegisterPage() {
                 <ul className="space-y-1 text-muted-foreground list-disc pl-4">
                   <li>Password hashed with bcrypt; never stored in plain text.</li>
                   <li>Session cookie is HTTP-only, signed with HS256 JWT.</li>
-                  <li>Registration fee is collected at video upload time.</li>
+                  <li>
+                    Registration is free. The 500 ETB audition fee is paid
+                    after sign-up — before you can upload your video.
+                  </li>
                 </ul>
               </div>
             </div>
 
-            <Field error={errors.agreedToTerms?.message}>
-              <Checkbox
-                checked={watched.agreedToTerms}
-                onChange={(e) =>
-                  setValue("agreedToTerms", e.target.checked, {
-                    shouldValidate: true,
-                  })
-                }
-                label={
-                  <span>
-                    I agree to the TalentQuest entry rules, content licensing
-                    terms, and the privacy policy.
-                  </span>
-                }
-              />
-            </Field>
+            <div className="space-y-3">
+              <Field error={errors.agreedToRules?.message}>
+                <Checkbox
+                  checked={watched.agreedToRules}
+                  onChange={(e) =>
+                    setValue("agreedToRules", e.target.checked, {
+                      shouldValidate: true,
+                    })
+                  }
+                  label={
+                    <span>
+                      I agree to The Bling Records Show entry rules and
+                      eligibility terms.
+                    </span>
+                  }
+                />
+              </Field>
+              <Field error={errors.agreedToRights?.message}>
+                <Checkbox
+                  checked={watched.agreedToRights}
+                  onChange={(e) =>
+                    setValue("agreedToRights", e.target.checked, {
+                      shouldValidate: true,
+                    })
+                  }
+                  label={
+                    <span>
+                      I license my audition video for review, broadcast, and
+                      promotional use as set out in the content licensing
+                      terms.
+                    </span>
+                  }
+                />
+              </Field>
+              <Field error={errors.agreedToAge?.message}>
+                <Checkbox
+                  checked={watched.agreedToAge}
+                  onChange={(e) =>
+                    setValue("agreedToAge", e.target.checked, {
+                      shouldValidate: true,
+                    })
+                  }
+                  label={
+                    isMinor ? (
+                      <span>
+                        I confirm I am 13 or older <strong>and</strong> have
+                        my parent or legal guardian&apos;s permission to apply.
+                      </span>
+                    ) : (
+                      <span>I confirm I am 18 or older.</span>
+                    )
+                  }
+                />
+              </Field>
+            </div>
 
             {serverError && (
               <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
@@ -378,7 +564,7 @@ export default function RegisterPage() {
 
             <div className="grid sm:grid-cols-3 gap-3 text-xs text-muted-foreground">
               <FuturePill icon={Lock} label="Bcrypt + JWT auth" />
-              <FuturePill icon={CreditCard} label="Telebirr at upload" />
+              <FuturePill icon={CreditCard} label="Fee at shortlist" />
               <FuturePill icon={Trophy} label="Persisted scoring" />
             </div>
           </motion.div>
@@ -479,7 +665,7 @@ function SuccessCard({ contestant }: { contestant: ContestantDTO }) {
         animate={{ opacity: 1, scale: 1 }}
         className="rounded-3xl border border-border/60 bg-card p-8 md:p-10 text-center stage-glow"
       >
-        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-white mx-auto">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white mx-auto">
           <CheckCircle2 className="h-7 w-7" />
         </div>
         <h1 className="mt-5 font-display text-3xl md:text-4xl font-bold">
@@ -504,19 +690,19 @@ function SuccessCard({ contestant }: { contestant: ContestantDTO }) {
 
         <div className="grid sm:grid-cols-3 gap-3 mt-8 text-left">
           <Link
-            href="/profile"
+            href="/contestant/dashboard"
             className="rounded-xl border border-border/60 bg-background p-4 hover:border-brand-500/50 transition-colors"
           >
-            <p className="text-sm font-semibold">View profile</p>
+            <p className="text-sm font-semibold">Open dashboard</p>
             <p className="text-xs text-muted-foreground">
-              Track your progress & upload.
+              Track your application + submission.
             </p>
           </Link>
           <Link
             href="/upload-guide"
             className="rounded-xl border border-border/60 bg-background p-4 hover:border-brand-500/50 transition-colors"
           >
-            <p className="text-sm font-semibold">Upload guide</p>
+            <p className="text-sm font-semibold">Audition guide</p>
             <p className="text-xs text-muted-foreground">
               Record a great submission.
             </p>
@@ -531,8 +717,11 @@ function SuccessCard({ contestant }: { contestant: ContestantDTO }) {
         </div>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-2 justify-center">
-          <Button variant="gradient" onClick={() => router.push("/profile")}>
-            Open my profile <ArrowRight className="ml-2 h-4 w-4" />
+          <Button
+            variant="gradient"
+            onClick={() => router.push("/contestant/dashboard")}
+          >
+            Open my dashboard <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <Button variant="ghost" onClick={() => router.push("/")}>
             Back to home

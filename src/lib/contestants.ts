@@ -37,33 +37,54 @@ export interface CreateContestantInput {
   stageName?: string | null;
   phone: string;
   age: number;
+  dob?: string | null;
   city: string;
+  country?: string;
   category: TalentCategoryId;
   experience: string;
   bio: string;
-  agreedToTerms: boolean;
+  socialIg?: string | null;
+  socialTt?: string | null;
+  socialYt?: string | null;
+  agreedToRules: boolean;
+  agreedToRights: boolean;
+  agreedToAge: boolean;
 }
 
 export async function createContestant(
   input: CreateContestantInput
 ): Promise<ContestantRow> {
   const id = await generateUniqueContestantId();
+  const now = new Date().toISOString();
   await tx(async ({ q }) => {
     await q(
       `INSERT INTO contestants
-        (id, user_id, stage_name, phone, age, city, category, experience, bio, agreed_to_terms)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, user_id, stage_name, phone, age, dob, city, country, category,
+         experience, bio, social_ig, social_tt, social_yt,
+         agreed_to_terms, agreed_to_rules_at, agreed_to_rights_at, agreed_to_age_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.userId,
         input.stageName || null,
         input.phone,
         input.age,
+        input.dob ?? null,
         input.city,
+        input.country ?? "ET",
         input.category,
         input.experience,
         input.bio,
-        input.agreedToTerms ? 1 : 0,
+        input.socialIg ?? null,
+        input.socialTt ?? null,
+        input.socialYt ?? null,
+        // Keep legacy `agreed_to_terms = 1` set when all three new consents
+        // are collected; preserves backward-compat with rows + queries that
+        // still rely on the binary flag.
+        input.agreedToRules && input.agreedToRights && input.agreedToAge ? 1 : 0,
+        input.agreedToRules ? now : null,
+        input.agreedToRights ? now : null,
+        input.agreedToAge ? now : null,
       ]
     );
     for (let i = 0; i < PROGRESS_DEFAULTS.length; i++) {
@@ -113,47 +134,6 @@ export async function listProgress(
   );
 }
 
-export async function advanceProgress(contestantId: string): Promise<{
-  step: ProgressStepRow | null;
-  status: ContestantRow["status"];
-}> {
-  const next = await queryOne<ProgressStepRow>(
-    `SELECT * FROM progress_steps
-     WHERE contestant_id = ? AND done = 0
-     ORDER BY ord ASC LIMIT 1`,
-    [contestantId]
-  );
-  if (!next) {
-    const c = await getContestantById(contestantId);
-    return { step: null, status: c?.status ?? "registered" };
-  }
-  const now = new Date().toISOString();
-  let nextStatus: ContestantRow["status"] | null = null;
-  if (next.step_key === "video_submitted") nextStatus = "submitted";
-  else if (next.step_key === "shortlisted") nextStatus = "shortlisted";
-  else if (next.step_key === "result")
-    nextStatus = Math.random() > 0.5 ? "advanced" : "eliminated";
-
-  await tx(async ({ q }) => {
-    await q(
-      `UPDATE progress_steps SET done = 1, done_at = ?
-       WHERE contestant_id = ? AND step_key = ?`,
-      [now, contestantId, next.step_key]
-    );
-    if (nextStatus) {
-      await q(`UPDATE contestants SET status = ? WHERE id = ?`, [
-        nextStatus,
-        contestantId,
-      ]);
-    }
-  });
-  const c = await getContestantById(contestantId);
-  return {
-    step: { ...next, done: 1, done_at: now },
-    status: c?.status ?? "registered",
-  };
-}
-
 export async function listContestants(opts?: {
   search?: string;
   category?: string;
@@ -193,43 +173,82 @@ export async function listContestants(opts?: {
 
 // ─── Submissions ─────────────────────────────────────────────────────────────
 
-export async function createSubmission(input: {
+export interface CreateSubmissionInput {
   contestantId: string;
   title: string;
   category: string;
   videoUrl?: string | null;
   thumbnailUrl?: string | null;
   durationSec?: number | null;
+  cloudinaryPublicId?: string | null;
+  format?: string | null;
+  sizeBytes?: number | null;
+  width?: number | null;
+  height?: number | null;
+  supersedesId?: string | null;
   notes?: string | null;
-}): Promise<SubmissionRow> {
+}
+
+export async function createSubmission(
+  input: CreateSubmissionInput
+): Promise<SubmissionRow> {
   const id = "sub_" + crypto.randomBytes(8).toString("hex");
-  await exec(
-    `INSERT INTO submissions
-       (id, contestant_id, title, category, video_url, thumbnail_url, duration_sec, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      input.contestantId,
-      input.title,
-      input.category,
-      input.videoUrl ?? null,
-      input.thumbnailUrl ?? null,
-      input.durationSec ?? null,
-      input.notes ?? null,
-    ]
-  );
-  // Auto-advance the "video_submitted" step.
-  await exec(
-    `UPDATE progress_steps
-       SET done = 1, done_at = ?
-     WHERE contestant_id = ? AND step_key = 'video_submitted' AND done = 0`,
-    [new Date().toISOString(), input.contestantId]
-  );
-  await exec(
-    `UPDATE contestants SET status = 'submitted'
-     WHERE id = ? AND status = 'registered'`,
-    [input.contestantId]
-  );
+  const now = new Date().toISOString();
+
+  await tx(async ({ q }) => {
+    await q(
+      `INSERT INTO submissions
+         (id, contestant_id, title, category, video_url, thumbnail_url, duration_sec,
+          cloudinary_public_id, format, size_bytes, width, height,
+          supersedes_id, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.contestantId,
+        input.title,
+        input.category,
+        input.videoUrl ?? null,
+        input.thumbnailUrl ?? null,
+        input.durationSec ?? null,
+        input.cloudinaryPublicId ?? null,
+        input.format ?? null,
+        input.sizeBytes ?? null,
+        input.width ?? null,
+        input.height ?? null,
+        input.supersedesId ?? null,
+        input.notes ?? null,
+      ]
+    );
+
+    // If this submission supersedes a prior one, mark the old one as
+    // `superseded` so it stops appearing in showcases / referee queues. We
+    // only flip rows that are still in a non-terminal state — once an admin
+    // has explicitly approved or rejected a take, that decision sticks.
+    if (input.supersedesId) {
+      await q(
+        `UPDATE submissions
+            SET status = 'superseded', superseded_at = ?
+          WHERE id = ?
+            AND contestant_id = ?
+            AND status IN ('pending','approved','flagged')`,
+        [now, input.supersedesId, input.contestantId]
+      );
+    }
+
+    // Auto-advance the "video_submitted" step.
+    await q(
+      `UPDATE progress_steps
+         SET done = 1, done_at = ?
+       WHERE contestant_id = ? AND step_key = 'video_submitted' AND done = 0`,
+      [now, input.contestantId]
+    );
+    await q(
+      `UPDATE contestants SET status = 'submitted'
+       WHERE id = ? AND status = 'registered'`,
+      [input.contestantId]
+    );
+  });
+
   return (await queryOne<SubmissionRow>(
     "SELECT * FROM submissions WHERE id = ?",
     [id]
@@ -241,6 +260,38 @@ export async function listSubmissionsForContestant(
 ): Promise<SubmissionRow[]> {
   return query<SubmissionRow>(
     "SELECT * FROM submissions WHERE contestant_id = ? ORDER BY created_at DESC",
+    [contestantId]
+  );
+}
+
+export async function getSubmissionById(
+  id: string
+): Promise<SubmissionRow | undefined> {
+  return queryOne<SubmissionRow>("SELECT * FROM submissions WHERE id = ?", [id]);
+}
+
+/**
+ * Update a submission's review status. Allowed transitions are limited to the
+ * referee/admin review states — superseded is set elsewhere (replace flow).
+ */
+export async function setSubmissionStatus(
+  submissionId: string,
+  status: "pending" | "approved" | "rejected" | "flagged"
+): Promise<void> {
+  await exec(`UPDATE submissions SET status = ? WHERE id = ?`, [
+    status,
+    submissionId,
+  ]);
+}
+
+/** Latest non-superseded submission for a contestant, if any. */
+export async function getLatestSubmissionForContestant(
+  contestantId: string
+): Promise<SubmissionRow | undefined> {
+  return queryOne<SubmissionRow>(
+    `SELECT * FROM submissions
+      WHERE contestant_id = ? AND status != 'superseded'
+      ORDER BY created_at DESC LIMIT 1`,
     [contestantId]
   );
 }

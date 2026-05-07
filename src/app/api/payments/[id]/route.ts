@@ -24,6 +24,10 @@ export const GET = route(async (_req, ctx: { params: { id: string } }) => {
     currency: p.currency,
     provider: p.provider,
     providerRef: p.provider_ref,
+    method: p.method,
+    bankName: p.bank_name,
+    receiptUrl: p.receipt_url,
+    receiptUploadedAt: p.receipt_uploaded_at,
     createdAt: p.created_at,
     updatedAt: p.updated_at,
   });

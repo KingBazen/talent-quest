@@ -56,23 +56,30 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Gold-on-black brand palette.
         brand: {
-          50: "#fff1f5",
-          100: "#ffe1ec",
-          200: "#ffc3d8",
-          300: "#ff95b9",
-          400: "#ff5a93",
-          500: "#ff2773",
-          600: "#f00056",
-          700: "#c80048",
-          800: "#a3033f",
-          900: "#85093a",
-          950: "#4a001b",
+          50:  "#fffce8",
+          100: "#fff9c2",
+          200: "#fff088",
+          300: "#ffe146",
+          400: "#facc15", // bright yellow
+          500: "#eab308", // rich gold — primary
+          600: "#ca8a04", // deep amber-gold
+          700: "#a16207",
+          800: "#854d0e",
+          900: "#713f12",
+          950: "#422006",
         },
+        // Alias kept for components that use `gold-*` classes directly.
         gold: {
           400: "#facc15",
           500: "#eab308",
           600: "#ca8a04",
+        },
+        // Keep ink names for the deep-black tones we use as backgrounds.
+        ink: {
+          900: "#0a0a0a",
+          950: "#050505",
         },
       },
       borderRadius: {
@@ -102,8 +109,8 @@ const config: Config = {
           "50%": { transform: "translateY(-10px)" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px rgba(255, 39, 115, 0.5)" },
-          "50%": { boxShadow: "0 0 40px rgba(255, 39, 115, 0.9)" },
+          "0%, 100%": { boxShadow: "0 0 20px rgba(234, 179, 8, 0.45)" },
+          "50%":      { boxShadow: "0 0 40px rgba(250, 204, 21, 0.85)" },
         },
       },
       animation: {
@@ -115,8 +122,11 @@ const config: Config = {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
       backgroundImage: {
-        "stage-gradient": "linear-gradient(135deg, #ff2773 0%, #8b5cf6 50%, #06b6d4 100%)",
-        "spotlight": "radial-gradient(circle at top, rgba(255, 39, 115, 0.25), transparent 70%)",
+        // Bright gold → deep gold → black, like a stage spotlight on a curtain.
+        "stage-gradient":
+          "linear-gradient(135deg, #facc15 0%, #eab308 40%, #422006 100%)",
+        "spotlight":
+          "radial-gradient(circle at top, rgba(234, 179, 8, 0.28), transparent 70%)",
       },
     },
   },

@@ -7,14 +7,16 @@ import { Menu, Sparkles, X, LogOut, Shield, Gavel, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "./ThemeToggle";
+import { LangToggle } from "@/components/i18n/LangToggle";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/components/auth/SessionProvider";
 
 const NAV = [
   { href: "/", label: "Home" },
-  { href: "/how-it-works", label: "How it works" },
+  { href: "/about", label: "About" },
+  { href: "/auditions", label: "Auditions" },
+  { href: "/show-format", label: "Show format" },
   { href: "/categories", label: "Categories" },
-  { href: "/upload-guide", label: "Upload guide" },
   { href: "/showcase", label: "Showcase" },
   { href: "/result-checker", label: "Results" },
   { href: "/faq", label: "FAQ" },
@@ -36,11 +38,11 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center gap-4">
         <Link href="/" className="flex items-center gap-2 font-bold">
-          <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-fuchsia-500 to-cyan-400 text-white shadow-lg shadow-brand-500/30">
+          <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-300 via-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30">
             <Sparkles className="h-4 w-4" />
           </span>
           <span className="hidden sm:inline-block text-lg tracking-tight">
-            TalentQuest
+            The Bling Records Show
           </span>
         </Link>
 
@@ -60,6 +62,7 @@ export function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <LangToggle className="hidden md:inline-flex" />
           <ThemeToggle />
           {!loading && user ? (
             <>
@@ -79,7 +82,7 @@ export function Navbar() {
               )}
               {user.role === "contestant" && (
                 <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
-                  <Link href="/profile">
+                  <Link href="/contestant/dashboard">
                     <User className="h-4 w-4 mr-1.5" /> {user.fullName.split(" ")[0]}
                   </Link>
                 </Button>
@@ -141,7 +144,7 @@ export function Navbar() {
                           ? "/admin"
                           : user.role === "referee"
                           ? "/referee"
-                          : "/profile"
+                          : "/contestant/dashboard"
                       }
                       onClick={() => setOpen(false)}
                     >

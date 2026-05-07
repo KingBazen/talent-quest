@@ -63,7 +63,7 @@ export default function FaqPage() {
             className={cn(
               "rounded-full px-3 py-1.5",
               lang === "en"
-                ? "bg-gradient-to-r from-brand-500 to-fuchsia-500 text-white"
+                ? "bg-gradient-to-r from-brand-400 to-brand-600 text-white"
                 : "text-muted-foreground"
             )}
           >
@@ -74,7 +74,7 @@ export default function FaqPage() {
             className={cn(
               "rounded-full px-3 py-1.5",
               lang === "am"
-                ? "bg-gradient-to-r from-brand-500 to-fuchsia-500 text-white"
+                ? "bg-gradient-to-r from-brand-400 to-brand-600 text-white"
                 : "text-muted-foreground"
             )}
           >
@@ -101,9 +101,9 @@ export default function FaqPage() {
         )}
       </Accordion>
 
-      <div className="mt-10 rounded-2xl border border-border/60 bg-gradient-to-br from-brand-500/5 via-fuchsia-500/5 to-cyan-500/5 p-6">
+      <div className="mt-10 rounded-2xl border border-border/60 bg-gradient-to-br from-brand-500/5 via-brand-500/5 to-brand-700/5 p-6">
         <div className="flex items-start gap-3">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-fuchsia-500 text-white">
+          <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-white">
             <Sparkles className="h-5 w-5" />
           </div>
           <div className="flex-1">

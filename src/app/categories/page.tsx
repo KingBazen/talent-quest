@@ -86,29 +86,29 @@ export default function CategoriesPage() {
 
 function tipsFor(id: string): string[] {
   switch (id) {
+    case "rap":
+      return [
+        "Live delivery beats lip-syncing — referees can tell.",
+        "Backing track is fine; full master cover is not.",
+        "Hit your strongest bar in the first 16.",
+      ];
     case "singing":
       return [
         "Choose a song that shows your range — but don't oversing.",
         "Live vocal preferred over heavy backing tracks.",
         "Hit your strongest moment in the first 30 seconds.",
       ];
-    case "dancing":
+    case "songwriter":
+      return [
+        "Original work only — covers don't count for this category.",
+        "Acoustic-and-vocal is enough; production polish isn't required.",
+        "Lyrics that say something specific beat lyrics that try to say everything.",
+      ];
+    case "performance":
       return [
         "Frame the full body — judges need to see footwork.",
         "Pair the music to your movement; don't fight the BPM.",
         "If a crew, line up the camera so everyone is visible.",
-      ];
-    case "acting":
-      return [
-        "Pick a piece with a clear emotional arc.",
-        "Use the camera as your scene partner — eye line matters.",
-        "Strong opening line, strong final beat.",
-      ];
-    case "comedy":
-      return [
-        "Test your bit on a friend before recording.",
-        "Cut filler — every second should serve a laugh.",
-        "Silence is okay; let beats land.",
       ];
     case "instruments":
       return [
@@ -118,9 +118,9 @@ function tipsFor(id: string): string[] {
       ];
     default:
       return [
-        "If it's visual (magic, acrobatics), shoot wide and avoid cuts.",
-        "If it's a one-shot wonder, get one perfect take.",
-        "Lead with the most dramatic moment of the act.",
+        "Lead with the most distinctive 10 seconds of your act.",
+        "If it's looping or production, show your process on camera.",
+        "One clean take beats five edits stitched together.",
       ];
   }
 }

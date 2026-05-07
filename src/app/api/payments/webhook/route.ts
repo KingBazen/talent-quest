@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { err, route } from "@/lib/api";
-import { recordWebhookResult, verifyTelebirrSignature } from "@/lib/payments";
+import {
+  getPaymentById,
+  recordWebhookResult,
+  verifyTelebirrSignature,
+} from "@/lib/payments";
+import { getContestantById } from "@/lib/contestants";
+import { notifyPaymentReceipt } from "@/lib/notify";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -20,6 +26,8 @@ const Body = z.object({
   tradeNo: z.string().optional(),
 });
 
+// AdmasPay POSTs from their server, not a browser → no Sec-Fetch-Site, so
+// we opt out of CSRF here. Authenticity is enforced by HMAC verification.
 export const POST = route(async (req: Request) => {
   const raw = await req.text();
   const sig = req.headers.get("x-telebirr-signature");
@@ -29,8 +37,10 @@ export const POST = route(async (req: Request) => {
   }
 
   let parsed: z.infer<typeof Body>;
+  let rawJson: unknown;
   try {
-    parsed = Body.parse(JSON.parse(raw));
+    rawJson = JSON.parse(raw);
+    parsed = Body.parse(rawJson);
   } catch (e) {
     return err(422, "Invalid webhook payload");
   }
@@ -43,7 +53,41 @@ export const POST = route(async (req: Request) => {
     paymentId: parsed.outTradeNo,
     providerRef: parsed.providerRef ?? parsed.tradeNo ?? "",
     succeeded,
+    rawPayload: rawJson,
   });
 
+  // P7-T009: receipt email on success only. Failed webhooks reach the user
+  // through the polling UI on /contestant/payment instead.
+  if (succeeded) {
+    try {
+      const payment = await getPaymentById(parsed.outTradeNo);
+      if (payment) {
+        const contestant = await getContestantById(payment.contestant_id);
+        if (contestant) {
+          const amountText = `${payment.currency} ${(payment.amount_cents / 100)
+            .toFixed(2)
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+          await notifyPaymentReceipt({
+            userId: contestant.user_id,
+            amountText,
+            reference:
+              parsed.providerRef ?? parsed.tradeNo ?? parsed.outTradeNo,
+            paidAtIso: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        JSON.stringify({
+          level: "warn",
+          evt: "payment.webhook.notify_failed",
+          payment_id: parsed.outTradeNo,
+          error: e instanceof Error ? e.message : "unknown",
+        })
+      );
+    }
+  }
+
   return NextResponse.json({ ok: true });
-});
+}, { csrf: "skip" });

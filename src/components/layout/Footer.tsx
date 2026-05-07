@@ -4,46 +4,62 @@ import { Sparkles, Instagram, Youtube, Send } from "lucide-react";
 export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background mt-20">
-      <div className="container py-12 grid gap-10 md:grid-cols-4">
+      <div className="container py-12 grid gap-10 md:grid-cols-5">
         <div className="md:col-span-1 space-y-3">
           <div className="flex items-center gap-2 font-bold">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-fuchsia-500 to-cyan-400 text-white">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-300 via-brand-500 to-brand-700 text-white">
               <Sparkles className="h-4 w-4" />
             </span>
-            <span className="text-lg tracking-tight">TalentQuest</span>
+            <span className="text-lg tracking-tight">The Bling Records Show</span>
           </div>
           <p className="text-sm text-muted-foreground max-w-xs">
-            Ethiopia's stage for the next generation of singers, dancers,
-            comedians, actors, and one-of-a-kind talents.
+            A music-first talent competition by Bling Records and Neo Studios —
+            built to find Ethiopia&apos;s next icon on stage.
           </p>
         </div>
 
         <div>
           <h4 className="font-semibold text-sm mb-3">Compete</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/register" className="hover:text-foreground">Register</Link></li>
-            <li><Link href="/how-it-works" className="hover:text-foreground">How it works</Link></li>
-            <li><Link href="/categories" className="hover:text-foreground">Categories</Link></li>
-            <li><Link href="/upload-guide" className="hover:text-foreground">Upload guide</Link></li>
+            <li><Link href="/register" className="hover:text-foreground">Apply now</Link></li>
+            <li><Link href="/auditions" className="hover:text-foreground">How auditions work</Link></li>
+            <li><Link href="/categories" className="hover:text-foreground">Music categories</Link></li>
+            <li><Link href="/upload-guide" className="hover:text-foreground">Audition video guide</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm mb-3">Discover</h4>
+          <h4 className="font-semibold text-sm mb-3">The show</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
+            <li><Link href="/about" className="hover:text-foreground">About the show</Link></li>
+            <li><Link href="/show-format" className="hover:text-foreground">Show format</Link></li>
+            <li><Link href="/judges" className="hover:text-foreground">Industry panel</Link></li>
+            <li><Link href="/episodes" className="hover:text-foreground">Episodes</Link></li>
+            <li><Link href="/stage-performances" className="hover:text-foreground">Stage performances</Link></li>
+            <li><Link href="/reels" className="hover:text-foreground">Reels</Link></li>
             <li><Link href="/showcase" className="hover:text-foreground">Showcase</Link></li>
+            <li><Link href="/contestants" className="hover:text-foreground">Contestants</Link></li>
+            <li><Link href="/leaderboard" className="hover:text-foreground">Leaderboard</Link></li>
             <li><Link href="/result-checker" className="hover:text-foreground">Result checker</Link></li>
-            <li><Link href="/faq" className="hover:text-foreground">FAQ / Chatbot</Link></li>
-            <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm mb-3">For staff</h4>
+          <h4 className="font-semibold text-sm mb-3">Legal</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
+            <li><Link href="/terms" className="hover:text-foreground">Terms &amp; rules</Link></li>
+            <li><Link href="/privacy" className="hover:text-foreground">Privacy</Link></li>
+            <li><Link href="/refund-policy" className="hover:text-foreground">Refund policy</Link></li>
+            <li><Link href="/content-rights" className="hover:text-foreground">Content rights</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-sm mb-3">Talk to us</h4>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
+            <li><Link href="/faq" className="hover:text-foreground">FAQ / Stage Bot</Link></li>
             <li><Link href="/login" className="hover:text-foreground">Sign in</Link></li>
-            <li><Link href="/admin" className="hover:text-foreground">Admin console</Link></li>
-            <li><Link href="/referee" className="hover:text-foreground">Referee dashboard</Link></li>
           </ul>
           <div className="flex gap-2 mt-4">
             <Link
@@ -72,8 +88,8 @@ export function Footer() {
       </div>
       <div className="border-t border-border/40">
         <div className="container py-5 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} TalentQuest. All rights reserved.</p>
-          <p>Built in Ethiopia · Powered by Next.js, SQLite, and bcrypt JWT auth.</p>
+          <p>© {new Date().getFullYear()} The Bling Records Show. All rights reserved.</p>
+          <p>Built in Ethiopia · Bling Records × Neo Studios.</p>
         </div>
       </div>
     </footer>

@@ -8,7 +8,9 @@ export interface SessionUser {
   id: string;
   email: string;
   fullName: string;
-  role: "contestant" | "referee" | "admin";
+  role: "contestant" | "referee" | "admin" | "audience" | "producer";
+  /** ISO timestamp when the user verified their email; null until verified. */
+  emailVerifiedAt?: string | null;
 }
 
 export interface LatestPayment {

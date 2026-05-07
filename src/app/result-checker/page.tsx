@@ -20,6 +20,7 @@ import { api, ApiError } from "@/lib/client-api";
 import { useSession } from "@/components/auth/SessionProvider";
 import type { PublicContestantDTO } from "@/lib/dto-types";
 import { TALENT_CATEGORIES } from "@/data/categories";
+import { statusCopy } from "@/lib/status-copy";
 
 interface CheckResponse {
   contestant: PublicContestantDTO;
@@ -140,43 +141,35 @@ function ResultCard({ result }: { result: CheckResponse }) {
   const { contestant, score } = result;
   const cat = TALENT_CATEGORIES.find((c) => c.id === contestant.category);
   const completed = contestant.progress.filter((p) => p.done).length;
+  const copy = statusCopy(contestant.status);
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-6">
       <div className="flex flex-wrap items-center gap-3">
         <Trophy className="h-6 w-6 text-gold-500" />
         <h2 className="font-display text-2xl font-bold">
-          {contestant.fullName}
+          {contestant.displayName}
         </h2>
-        <Badge
-          variant={contestant.status === "advanced" ? "gradient" : "secondary"}
-          className="capitalize"
-        >
-          {contestant.status}
-        </Badge>
+        <Badge variant={copy.badge}>{copy.label}</Badge>
       </div>
       <p className="text-muted-foreground mt-1">
         ID <span className="font-mono">{contestant.id}</span> · {cat?.name} ·{" "}
         {contestant.city}
       </p>
 
-      <div className="mt-6 grid sm:grid-cols-3 gap-3 text-center">
+      <p className="mt-4 text-sm text-muted-foreground">{copy.description}</p>
+
+      <div className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-brand-500">
+        Next: {copy.nextStep}
+      </div>
+
+      <div className="mt-6 grid sm:grid-cols-2 gap-3 text-center">
         <Stat
           label="Stages cleared"
           value={`${completed}/${contestant.progress.length}`}
         />
         <Stat
           label="Score"
-          value={
-            score
-              ? `${score.total} / 100`
-              : "Awaiting judges"
-          }
-        />
-        <Stat
-          label="Round"
-          value={
-            contestant.status === "registered" ? "Pre-submission" : "Round 1"
-          }
+          value={score ? `${score.total} / 100` : "Awaiting judges"}
         />
       </div>
 

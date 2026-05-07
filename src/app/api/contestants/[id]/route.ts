@@ -7,11 +7,24 @@ import {
 import { contestantToPublicDTO, userById } from "@/lib/dto";
 import { aggregateScoresFor } from "@/lib/scores";
 import { queryOne } from "@/lib/db";
+import { enforceRateLimit, ipFromRequest } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const GET = route(async (_req, ctx: { params: { id: string } }) => {
+// 30 lookups per 5-minute window per IP. Counts every request — both hits and
+// misses — so an attacker can't probe with valid IDs to evade detection.
+const LOOKUP_LIMIT = 30;
+const LOOKUP_WINDOW_MS = 5 * 60 * 1000;
+
+export const GET = route(async (req: Request, ctx: { params: { id: string } }) => {
+  await enforceRateLimit({
+    bucket: "contestants.lookup",
+    identifier: ipFromRequest(req),
+    limit: LOOKUP_LIMIT,
+    windowMs: LOOKUP_WINDOW_MS,
+  });
+
   const id = String(ctx.params.id || "").trim();
   if (!/^\d{6}$/.test(id)) throw new ApiError(400, "ID must be 6 digits");
   const c = await getContestantById(id);

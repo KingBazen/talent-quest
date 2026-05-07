@@ -12,10 +12,10 @@ export function CategoryGrid() {
       <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-10">
         <div className="max-w-xl">
           <p className="text-sm font-semibold uppercase tracking-wider text-brand-500">
-            Talent categories
+            Music categories
           </p>
           <h2 className="mt-2 font-display text-3xl md:text-5xl font-bold tracking-tight">
-            Pick your stage. Bring your <span className="gradient-text">heat</span>.
+            Bring your <span className="gradient-text">sound</span>.
           </h2>
         </div>
         <Button asChild variant="ghost">

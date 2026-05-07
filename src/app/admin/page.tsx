@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { TALENT_CATEGORIES } from "@/data/categories";
 import { api, ApiError } from "@/lib/client-api";
 import { useSession } from "@/components/auth/SessionProvider";
+import { AdminSubNav } from "@/components/admin/SubNav";
 
 interface Stats {
   contestants: { total: number; weeklyDelta: number };
@@ -122,7 +123,8 @@ export default function AdminPage() {
     : [];
 
   return (
-    <div className="container py-10 md:py-14 space-y-8">
+    <div className="container py-10 md:py-14 space-y-6">
+      <AdminSubNav />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Badge variant="outline" className="mb-2">Admin console</Badge>
@@ -133,9 +135,6 @@ export default function AdminPage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => void load()}>
             Refresh
-          </Button>
-          <Button variant="gradient" size="sm">
-            <Sparkles className="h-4 w-4 mr-1.5" /> Open round 2
           </Button>
         </div>
       </div>
@@ -296,13 +295,19 @@ export default function AdminPage() {
               </div>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Telebirr / AdmasPay integration runs in stub mode until
-              TELEBIRR_* env vars are configured. See{" "}
-              <a className="underline" href="/docs/PAYMENTS_TELEBIRR.md">
-                docs/PAYMENTS_TELEBIRR.md
-              </a>{" "}
-              for setup.
+              Telebirr / AdmasPay integration runs in hosted-checkout mode when
+              <code className="mx-1 rounded bg-muted px-1">ADMASPAY_CHECKOUT_URL</code>
+              is set, or full-API mode when all <code>TELEBIRR_*</code> env vars
+              are configured. Otherwise <code>/api/payments/init</code> returns
+              a 500 with a clear configuration error.
             </p>
+            <div className="mt-4">
+              <Button asChild variant="outline" size="sm">
+                <a href="/admin/payments">
+                  Open payments console <span aria-hidden="true">→</span>
+                </a>
+              </Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

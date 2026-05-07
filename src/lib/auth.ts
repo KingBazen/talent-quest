@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { exec, queryOne, type UserRole, type UserRow } from "./db";
@@ -49,11 +49,26 @@ export function clearSessionCookie() {
   cookies().delete(COOKIE);
 }
 
+/**
+ * Read the JWT from either:
+ *   - the HTTP-only `tq_session` cookie (web flow), or
+ *   - an `Authorization: Bearer <token>` header (mobile flow)
+ *
+ * Both sources are consulted in every route via Next.js's request-scoped
+ * `cookies()` and `headers()` helpers, so existing call sites don't need to
+ * pass `req` through.
+ */
 export async function readSession(): Promise<SessionPayload | null> {
-  const c = cookies().get(COOKIE);
-  if (!c) return null;
+  let token = cookies().get(COOKIE)?.value;
+  if (!token) {
+    const auth = headers().get("authorization");
+    if (auth?.toLowerCase().startsWith("bearer ")) {
+      token = auth.slice(7).trim();
+    }
+  }
+  if (!token) return null;
   try {
-    const { payload } = await jwtVerify(c.value, secret());
+    const { payload } = await jwtVerify(token, secret());
     return {
       sub: String(payload.sub),
       role: payload.role as UserRole,

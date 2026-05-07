@@ -23,9 +23,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Local env files
-.env*.local
+# Local env files — NEVER commit any of these. Real secrets live only in the
+# host's environment-variable UI (Vercel → Settings → Environment Variables).
+# See README.md "Security" section.
 .env
+.env.local
+.env.*.local
 
 # Local SQLite database (auto-created)
 /data

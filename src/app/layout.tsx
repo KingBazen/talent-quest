@@ -2,11 +2,21 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
+import dynamic from "next/dynamic";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget";
 import { SessionProvider } from "@/components/auth/SessionProvider";
+import { LangProvider } from "@/components/i18n/LangProvider";
+
+// P7-T015: defer the chatbot off the critical path. It only renders on
+// interaction, so its framer-motion + chat data + Anthropic-aware client
+// shouldn't block first paint.
+const ChatbotWidget = dynamic(
+  () =>
+    import("@/components/chatbot/ChatbotWidget").then((m) => m.ChatbotWidget),
+  { ssr: false }
+);
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,29 +33,31 @@ const display = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://talentquest.example.com"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://blingrecordsshow.com"
+  ),
   title: {
-    default: "TalentQuest — Ethiopia's stage for the next big talent",
-    template: "%s · TalentQuest",
+    default: "The Bling Records Show — Ethiopia's next musical icon",
+    template: "%s · The Bling Records Show",
   },
   description:
-    "Register, submit a video, and compete in singing, dancing, acting, comedy, instruments, and more. AGT-style competition built for Ethiopia.",
+    "A music-first talent competition by Bling Records and Neo Studios. Apply, submit your audition video, and rise from your bedroom to the music house.",
   keywords: [
-    "talent show",
+    "Bling Records",
+    "Neo Studios",
+    "music competition",
     "Ethiopia",
-    "AGT",
-    "Idol",
-    "competition",
-    "registration",
-    "Telebirr",
+    "audition",
+    "rap",
     "singing",
-    "dancing",
-    "acting",
+    "songwriter",
+    "instruments",
+    "Telebirr",
   ],
   openGraph: {
-    title: "TalentQuest",
+    title: "The Bling Records Show",
     description:
-      "Ethiopia's stage for the next generation of singers, dancers, actors, comedians, and one-of-a-kind talents.",
+      "Ethiopia's music-first talent show — by Bling Records and Neo Studios.",
     type: "website",
   },
 };
@@ -72,12 +84,14 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-background font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <SessionProvider>
-            <Navbar />
-            <main className="min-h-[60vh]">{children}</main>
-            <Footer />
-            <ChatbotWidget />
-          </SessionProvider>
+          <LangProvider>
+            <SessionProvider>
+              <Navbar />
+              <main className="min-h-[60vh]">{children}</main>
+              <Footer />
+              <ChatbotWidget />
+            </SessionProvider>
+          </LangProvider>
         </ThemeProvider>
       </body>
     </html>

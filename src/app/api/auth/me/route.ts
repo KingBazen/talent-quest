@@ -48,6 +48,7 @@ export const GET = route(async () => {
       email: user.email,
       fullName: user.full_name,
       role: user.role,
+      emailVerifiedAt: user.email_verified_at,
     },
     contestant: contestantDTO,
     latestPayment,

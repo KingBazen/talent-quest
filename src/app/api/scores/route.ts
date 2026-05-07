@@ -3,6 +3,7 @@ import { ok, parseJson, route } from "@/lib/api";
 import { ApiError, requireRole } from "@/lib/auth";
 import { exec, queryOne } from "@/lib/db";
 import { upsertScores, aggregateScoresFor } from "@/lib/scores";
+import { refereeCanAccess } from "@/lib/assignments";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,7 @@ const Body = z.object({
   submissionId: z.string().min(3),
   scores: z.record(z.string(), z.coerce.number().int().min(0).max(100)),
   notes: z.string().max(2000).optional().nullable(),
+  publicNotes: z.string().max(2000).optional().nullable(),
 });
 
 export const POST = route(async (req: Request) => {
@@ -22,11 +24,18 @@ export const POST = route(async (req: Request) => {
   );
   if (!submission) throw new ApiError(404, "Submission not found");
 
+  // Referees can only score submissions assigned to them; admins anywhere.
+  if (session.role === "referee") {
+    const allowed = await refereeCanAccess(data.submissionId, session.sub);
+    if (!allowed) throw new ApiError(403, "Submission not assigned to you");
+  }
+
   await upsertScores({
     submissionId: data.submissionId,
     refereeUserId: session.sub,
     scores: data.scores,
     notes: data.notes ?? undefined,
+    publicNotes: data.publicNotes ?? undefined,
   });
 
   // Once any submission has 3+ judges and avg > 70, mark contestant shortlisted.

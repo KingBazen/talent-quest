@@ -8,7 +8,6 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 import {
   Mail,
-  Phone,
   MapPin,
   CheckCircle2,
   Send,
@@ -70,13 +69,12 @@ export default function ContactPage() {
           <ContactRow
             icon={Mail}
             label="Email"
-            value="hello@talentquest.example.com"
+            value="Use the form — humans reply within 48 h"
           />
-          <ContactRow icon={Phone} label="Phone" value="+251 11 000 0000" />
           <ContactRow
             icon={MapPin}
             label="HQ"
-            value="Bole, Addis Ababa, Ethiopia"
+            value="Addis Ababa, Ethiopia"
           />
           <ContactRow
             icon={MessageCircle}
@@ -120,7 +118,7 @@ export default function ContactPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-10"
           >
-            <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-white">
+            <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white">
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <h2 className="mt-4 font-display text-2xl font-bold">

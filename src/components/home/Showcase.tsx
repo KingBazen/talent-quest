@@ -1,21 +1,32 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Play, ArrowRight, Heart } from "lucide-react";
-import { SHOWCASE_CLIPS } from "@/data/showcase";
+import { Play, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-function fmtViews(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
+import { api } from "@/lib/client-api";
+import type { ShowcaseClip } from "@/types";
 
 export function Showcase() {
-  const clips = SHOWCASE_CLIPS.slice(0, 6);
+  const [clips, setClips] = React.useState<ShowcaseClip[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    api
+      .get<{ items: ShowcaseClip[] }>("/api/showcase")
+      .then((d) => setClips((d.items ?? []).slice(0, 6)))
+      .catch(() => setClips([]))
+      .finally(() => setLoaded(true));
+  }, []);
+
+  // Don't render the section at all until we know whether there are real clips.
+  // Empty state is owned by /showcase, not the homepage — the homepage simply
+  // hides the section if there's nothing approved yet.
+  if (!loaded || clips.length === 0) return null;
+
   return (
     <section className="container py-16 md:py-24">
       <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-10">
@@ -24,7 +35,7 @@ export function Showcase() {
             Showcase
           </p>
           <h2 className="mt-2 font-display text-3xl md:text-5xl font-bold tracking-tight">
-            Performances that gave us <span className="gradient-text">chills</span>.
+            Approved <span className="gradient-text">auditions</span>.
           </h2>
         </div>
         <Button asChild variant="ghost">
@@ -43,8 +54,10 @@ export function Showcase() {
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: i * 0.05 }}
           >
-            <Link
-              href={`/showcase?id=${v.id}`}
+            <a
+              href={v.videoUrl ?? "/showcase"}
+              target={v.videoUrl ? "_blank" : undefined}
+              rel={v.videoUrl ? "noreferrer" : undefined}
               className="group block rounded-2xl overflow-hidden border border-border/60 bg-card hover:border-brand-500/50 transition-all"
             >
               <div className="relative aspect-video overflow-hidden bg-muted">
@@ -61,28 +74,26 @@ export function Showcase() {
                     <Play className="h-5 w-5 fill-current" />
                   </span>
                 </div>
-                <Badge variant="gradient" className="absolute top-3 left-3 capitalize">
+                <Badge
+                  variant="gradient"
+                  className="absolute top-3 left-3 capitalize"
+                >
                   {v.category}
                 </Badge>
-                <span className="absolute bottom-3 right-3 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-mono text-white">
-                  {Math.floor(v.durationSec / 60)}:
-                  {String(v.durationSec % 60).padStart(2, "0")}
-                </span>
+                {v.durationSec ? (
+                  <span className="absolute bottom-3 right-3 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-mono text-white">
+                    {Math.floor(v.durationSec / 60)}:
+                    {String(v.durationSec % 60).padStart(2, "0")}
+                  </span>
+                ) : null}
               </div>
               <div className="p-4">
                 <h3 className="font-semibold line-clamp-1">{v.title}</h3>
                 <p className="text-sm text-muted-foreground">
                   {v.contestant} · {v.city}
                 </p>
-                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>{fmtViews(v.views)} views</span>
-                  <span className="flex items-center gap-1">
-                    <Heart className="h-3 w-3" />
-                    {fmtViews(v.likes)}
-                  </span>
-                </div>
               </div>
-            </Link>
+            </a>
           </motion.div>
         ))}
       </div>
