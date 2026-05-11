@@ -50,8 +50,8 @@ export function BlingLogo({
   }
 
   if (variant === "lockup") {
-    // Inline mark + standalone wordmark image. We size the wordmark off the
-    // icon's height so a single `size` prop drives the whole lockup.
+    // Horizontal lockup: mark tile + wordmark image. Wordmark height is
+    // derived from the tile so a single `size` drives the whole lockup.
     const wordH = Math.round(size * 0.78);
     return (
       <span className={cn("inline-flex items-center gap-3", className)}>
@@ -68,24 +68,25 @@ export function BlingLogo({
     );
   }
 
-  // stacked — composite (silhouette + wordmark) is already a single asset, so
-  // we render it as one square image. Cheaper than re-stacking the parts and
-  // matches the deck artwork pixel-for-pixel.
+  // stacked — official vector lockup (mark stacked above wordmark). The SVG
+  // carries its own gold gradients so it reads cleanly on both light and dark
+  // themes. Native aspect is 773×938 ≈ 0.82 (portrait).
+  const stackedH = Math.round(size * (938 / 773));
   return (
     <motion.span
       className={cn("inline-flex shrink-0", className)}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: stackedH }}
       whileHover={useAnim ? { scale: 1.02 } : undefined}
       transition={{ type: "spring", stiffness: 240, damping: 18 }}
       aria-label="Bling Records"
     >
       <Image
-        src="/brand/bling-records-full.png"
+        src="/brand/bling-records-logo.svg"
         alt="Bling Records"
         width={size}
-        height={size}
+        height={stackedH}
         priority
-        className="select-none"
+        className="select-none drop-shadow-[0_2px_8px_rgba(234,179,8,0.25)]"
         style={{ objectFit: "contain" }}
       />
     </motion.span>

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/components/i18n/LangProvider";
 import { useSession } from "@/components/auth/SessionProvider";
+import { BlingLogo } from "@/components/brand/BlingLogo";
 
 export function CTA() {
   const { lang } = useLang();
@@ -57,9 +59,16 @@ export function CTA() {
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.2),transparent_50%)]" />
         <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs font-semibold mb-6">
-            <Sparkles className="h-3 w-3" />
-            Bling Records × Neo Studios
+          <div className="inline-flex items-center gap-3 rounded-full bg-white/15 backdrop-blur px-4 py-1.5 text-xs font-semibold mb-6">
+            <BlingLogo variant="icon" size={22} showRing={false} animated={false} />
+            <span className="opacity-80">×</span>
+            <Image
+              src="/brand/neo-studios-logo.png"
+              alt="Neo Studios"
+              width={64}
+              height={22}
+              className="h-[22px] w-auto object-contain brightness-0 invert"
+            />
           </div>
           <h2 className="font-display text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight">
             {headline}

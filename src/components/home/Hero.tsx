@@ -71,34 +71,43 @@ export function Hero() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-brand-400/20 blur-3xl" />
       </div>
 
-      <div className="container py-16 md:py-24 lg:py-32 relative">
+      <div className="container py-8 md:py-14 lg:py-20 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="flex flex-col items-center text-center max-w-4xl mx-auto"
         >
-          <BlingLogo variant="stacked" size={108} className="mb-6" />
+          <BlingLogo
+            variant="stacked"
+            size={72}
+            className="mb-3 md:hidden"
+          />
+          <BlingLogo
+            variant="stacked"
+            size={96}
+            className="mb-4 hidden md:inline-flex"
+          />
 
           <Badge
             variant="outline"
-            className="mb-6 backdrop-blur-sm bg-background/50"
+            className="mb-4 backdrop-blur-sm bg-background/50"
           >
             <Sparkles className="mr-1 h-3 w-3 text-brand-500" />
             {t.hero.eyebrow}
           </Badge>
 
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
             {t.hero.headline_1}
             <br />
             <span className="gradient-text">{t.hero.headline_2}</span>
           </h1>
 
-          <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl text-balance">
+          <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-2xl text-balance">
             {t.hero.sub}
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <Button asChild size="xl" variant="gradient" className="group">
               <Link href={primary.href}>
                 {loading ? (
@@ -116,7 +125,7 @@ export function Hero() {
             </Button>
           </div>
 
-          <div className="mt-8 w-full max-w-2xl">
+          <div className="mt-6 w-full max-w-2xl">
             <ol className="flex items-stretch justify-between gap-2 rounded-2xl border border-border/60 bg-background/60 backdrop-blur p-2">
               {stepLabels.map((label, i) => {
                 const done = stepDone[i];

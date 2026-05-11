@@ -45,10 +45,10 @@ export function Navbar() {
         >
           <BlingLogo variant="icon" size={40} />
           <span className="hidden sm:inline-flex flex-col leading-none">
-            <span className="font-display text-[15px] font-extrabold tracking-tight bg-clip-text text-transparent bg-[linear-gradient(110deg,#fde68a_0%,#facc15_25%,#fff7c2_50%,#eab308_75%,#a16207_100%)] bg-[length:200%_100%] animate-shine">
+            <span className="font-display text-[15px] font-extrabold tracking-tight bg-clip-text text-transparent bg-[linear-gradient(110deg,#78350f_0%,#b45309_25%,#eab308_50%,#b45309_75%,#78350f_100%)] dark:bg-[linear-gradient(110deg,#fde68a_0%,#facc15_25%,#fff7c2_50%,#eab308_75%,#a16207_100%)] bg-[length:200%_100%] animate-shine">
               BLING RECORDS
             </span>
-            <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.32em] text-brand-500/80">
+            <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.32em] text-brand-700 dark:text-brand-500/80">
               Talent Show
             </span>
           </span>

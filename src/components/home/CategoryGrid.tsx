@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 
 export function CategoryGrid() {
   return (
-    <section className="container py-16 md:py-24">
-      <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-10">
+    <section className="container py-10 md:py-16">
+      <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-6">
         <div className="max-w-xl">
           <p className="text-sm font-semibold uppercase tracking-wider text-brand-500">
             Music categories

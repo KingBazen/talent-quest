@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Instagram, Youtube, Send } from "lucide-react";
 import { BlingLogo } from "@/components/brand/BlingLogo";
 
@@ -12,6 +13,16 @@ export function Footer() {
             A music-first talent competition by Bling Records and Neo Studios —
             built to find Ethiopia&apos;s next icon on stage.
           </p>
+          <div className="flex items-center gap-2 pt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            <span>In partnership with</span>
+            <Image
+              src="/brand/neo-studios-logo.png"
+              alt="Neo Studios"
+              width={80}
+              height={28}
+              className="h-7 w-auto object-contain opacity-90 dark:brightness-0 dark:invert"
+            />
+          </div>
         </div>
 
         <div>
