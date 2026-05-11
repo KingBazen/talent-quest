@@ -7,6 +7,7 @@ import {
   setSessionCookie,
   verifyPassword,
 } from "@/lib/auth";
+import { queryOne, type UserRow } from "@/lib/db";
 import { getContestantByUserId } from "@/lib/contestants";
 import {
   decrementRateLimit,
@@ -17,7 +18,11 @@ import {
 export const runtime = "nodejs";
 
 const Body = z.object({
-  email: z.string().email(),
+  // Phase 13: contestants can sign up with phone-only, so the login form
+  // accepts either an email address or a phone number in this field. The
+  // server-side splitter below picks the right lookup. Field name stays
+  // `email` for mobile-client backwards compatibility.
+  email: z.string().min(1, "Enter your phone or email"),
   password: z.string().min(1),
   /**
    * Phase 12 (P12-T001): mobile clients pass `audience: "mobile"` to receive
@@ -26,6 +31,30 @@ const Body = z.object({
    */
   audience: z.enum(["web", "mobile"]).optional(),
 });
+
+/**
+ * Look a user up by email if the identifier looks like an email; otherwise
+ * normalize to digits and match the contestants.phone column. We deliberately
+ * do not fall through both lookups for every request — a phone-shaped string
+ * with an `@` is never an email, and vice versa.
+ */
+async function findUserForLogin(identifier: string): Promise<UserRow | undefined> {
+  const trimmed = identifier.trim();
+  if (trimmed.includes("@")) {
+    return getUserByEmail(trimmed);
+  }
+  const digits = trimmed.replace(/\D+/g, "");
+  if (!digits) return undefined;
+  // Match either the digits-only canonical form or the original stored
+  // string, since contestants.phone preserves whatever the user typed.
+  return queryOne<UserRow>(
+    `SELECT u.* FROM users u
+       JOIN contestants c ON c.user_id = u.id
+      WHERE regexp_replace(c.phone, '\\D', '', 'g') = ?
+      LIMIT 1`,
+    [digits]
+  );
+}
 
 // 10 failed attempts per 15 minutes per IP. We count up-front and roll back
 // on success so a real user with the right password isn't penalised by their
@@ -43,17 +72,17 @@ export const POST = route(async (req: Request) => {
   });
 
   const { email, password, audience } = await parseJson(req, Body);
-  const user = await getUserByEmail(email);
-  if (!user) throw new ApiError(401, "Invalid email or password");
+  const user = await findUserForLogin(email);
+  if (!user) throw new ApiError(401, "Invalid login or password");
   const okPw = await verifyPassword(password, user.password_hash);
-  if (!okPw) throw new ApiError(401, "Invalid email or password");
+  if (!okPw) throw new ApiError(401, "Invalid login or password");
 
   // Withdrawn contestants cannot log in — return the same 401 message as a
   // bad password so a withdrawal isn't externally enumerable.
   if (user.role === "contestant") {
     const contestant = await getContestantByUserId(user.id);
     if (contestant?.withdrawn_at) {
-      throw new ApiError(401, "Invalid email or password");
+      throw new ApiError(401, "Invalid login or password");
     }
   }
 

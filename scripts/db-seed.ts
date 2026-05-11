@@ -105,7 +105,7 @@ async function main() {
   await ensureUser({
     email: process.env.SEED_ADMIN_EMAIL || "admin@blingshow.local",
     password: process.env.SEED_ADMIN_PASSWORD || "Admin1234!",
-    fullName: "Bling Records Show Admin",
+    fullName: "Bling Records Talent Show Admin",
     role: "admin",
   });
 

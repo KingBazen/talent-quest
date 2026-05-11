@@ -45,6 +45,8 @@ export interface PublicContestantDTO {
   progress: { key: string; label: string; done: boolean; date?: string }[];
 }
 
+export type SubmissionSlot = "main" | "extra_1" | "extra_2";
+
 export interface SubmissionDTO {
   id: string;
   contestantId: string;
@@ -60,5 +62,6 @@ export interface SubmissionDTO {
   supersedesId: string | null;
   status: "pending" | "approved" | "rejected" | "flagged" | "superseded";
   notes: string | null;
+  slot: SubmissionSlot;
   createdAt: string;
 }

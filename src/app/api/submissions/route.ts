@@ -4,7 +4,7 @@ import { ApiError, getUserById, requireRole } from "@/lib/auth";
 import {
   createSubmission,
   getContestantByUserId,
-  getLatestSubmissionForContestant,
+  getLatestSubmissionForSlot,
   listSubmissionsForContestant,
 } from "@/lib/contestants";
 import { submissionToDTO } from "@/lib/dto";
@@ -35,6 +35,9 @@ const PostBody = z.object({
   thumbnailUrl: z.string().url().optional().nullable(),
   durationSec: z.number().int().min(1).max(7200).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
+  // Phase 13: 'main' is the competition entry, 'extra_1' / 'extra_2' are
+  // optional supplementary videos. Defaults to 'main' for backward compat.
+  slot: z.enum(["main", "extra_1", "extra_2"]).optional(),
 });
 
 export const POST = route(async (req: Request) => {
@@ -61,10 +64,12 @@ export const POST = route(async (req: Request) => {
   }
 
   const data = await parseJson(req, PostBody);
+  const slot = data.slot ?? "main";
 
-  // Replace-submission flow: if there's a non-superseded prior, mark it
-  // superseded as part of the same transaction in createSubmission.
-  const prior = await getLatestSubmissionForContestant(c.id);
+  // Replace-submission flow: only supersede a prior submission in the *same*
+  // slot. Re-uploading an extra shouldn't blow away the main competition
+  // video and vice versa.
+  const prior = await getLatestSubmissionForSlot(c.id, slot);
 
   const sub = await createSubmission({
     contestantId: c.id,
@@ -75,6 +80,7 @@ export const POST = route(async (req: Request) => {
     durationSec: data.durationSec,
     notes: data.notes,
     supersedesId: prior?.id ?? null,
+    slot,
   });
   return ok({ submission: submissionToDTO(sub) }, { status: 201 });
 });

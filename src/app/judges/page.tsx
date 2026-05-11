@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Industry panel",
   description:
-    "The referees who score The Bling Records Show auditions — credits, criteria, and how scoring works behind the scenes.",
+    "The referees who score The Bling Records Talent Show auditions — credits, criteria, and how scoring works behind the scenes.",
 };
 
 export default function JudgesPage() {

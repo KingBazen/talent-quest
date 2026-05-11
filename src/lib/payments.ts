@@ -135,7 +135,7 @@ export async function initPayment(opts: {
   const payload = {
     appId: process.env.TELEBIRR_MERCHANT_ID,
     outTradeNo: id,
-    subject: `Bling Records Show registration ${opts.contestantId}`,
+    subject: `Bling Records Talent Show registration ${opts.contestantId}`,
     totalAmount: (amount / 100).toFixed(2),
     notifyUrl: process.env.TELEBIRR_NOTIFY_URL,
     timeoutExpress: "15m",

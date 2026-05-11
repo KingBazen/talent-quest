@@ -2,9 +2,9 @@ import type { FaqEntry } from "@/types";
 
 export const FAQ_ENTRIES: FaqEntry[] = [
   {
-    q: "Who can register for The Bling Records Show?",
+    q: "Who can register for The Bling Records Talent Show?",
     a: "Anyone aged 13 and above can register. Contestants under 18 will need a parent or legal guardian to co-sign during the live audition.",
-    qAm: "ለBling Records Show ማን ሊመዘገብ ይችላል?",
+    qAm: "ለBling Records Talent Show ማን ሊመዘገብ ይችላል?",
     aAm: "ከ13 ዓመት እና ከዚያ በላይ የሆነ ማንም ሰው መመዝገብ ይችላል። ከ18 ዓመት በታች የሆኑ ተወዳዳሪዎች በቀጥታ የመጠቆሚያ ሙከራ ጊዜ ወላጅ ወይም ሕጋዊ ጠባቂ ፈርመው ማቅረብ አለባቸው።",
     tags: ["eligibility", "age", "register"],
   },

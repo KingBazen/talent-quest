@@ -1,17 +1,13 @@
 import Link from "next/link";
-import { Sparkles, Instagram, Youtube, Send } from "lucide-react";
+import { Instagram, Youtube, Send } from "lucide-react";
+import { BlingLogo } from "@/components/brand/BlingLogo";
 
 export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background mt-20">
       <div className="container py-12 grid gap-10 md:grid-cols-5">
         <div className="md:col-span-1 space-y-3">
-          <div className="flex items-center gap-2 font-bold">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-300 via-brand-500 to-brand-700 text-white">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <span className="text-lg tracking-tight">The Bling Records Show</span>
-          </div>
+          <BlingLogo variant="lockup" size={44} />
           <p className="text-sm text-muted-foreground max-w-xs">
             A music-first talent competition by Bling Records and Neo Studios —
             built to find Ethiopia&apos;s next icon on stage.
@@ -88,7 +84,7 @@ export function Footer() {
       </div>
       <div className="border-t border-border/40">
         <div className="container py-5 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} The Bling Records Show. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} The Bling Records Talent Show. All rights reserved.</p>
           <p>Built in Ethiopia · Bling Records × Neo Studios.</p>
         </div>
       </div>

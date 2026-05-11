@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
 export const metadata: Metadata = {
   title: "Terms & competition rules",
   description:
-    "The Bling Records Show terms of service and competition rules. Draft placeholder — must be reviewed by counsel before production launch.",
+    "The Bling Records Talent Show terms of service and competition rules. Draft placeholder — must be reviewed by counsel before production launch.",
 };
 
 const SECTIONS = [
@@ -16,7 +16,7 @@ const SECTIONS = [
     id: "eligibility",
     title: "1. Who can enter",
     body: [
-      "The Bling Records Show is open to applicants who are 14 years old or older on the day they apply. Applicants under 18 must provide explicit guardian permission during registration; the guardian-consent checkbox on the register page is the binding form of that permission.",
+      "The Bling Records Talent Show is open to applicants who are 14 years old or older on the day they apply. Applicants under 18 must provide explicit guardian permission during registration; the guardian-consent checkbox on the register page is the binding form of that permission.",
       "Applicants must be Ethiopian residents or have an active legal right to perform in Ethiopia for the duration of the season. The site collects country and city during registration so that production can confirm logistics; falsifying that information is grounds for disqualification.",
       "Employees of Bling Records, Neo Studios, and members of their immediate families may not enter as contestants. They may apply for staff or referee roles separately.",
     ],
@@ -78,7 +78,7 @@ const SECTIONS = [
     id: "liability",
     title: "8. Liability",
     body: [
-      "The Bling Records Show is provided on an as-is basis. To the maximum extent permitted by Ethiopian law, neither Bling Records, Neo Studios, the production team, nor any referee is liable for indirect, consequential, special, or punitive damages arising from your application or participation.",
+      "The Bling Records Talent Show is provided on an as-is basis. To the maximum extent permitted by Ethiopian law, neither Bling Records, Neo Studios, the production team, nor any referee is liable for indirect, consequential, special, or punitive damages arising from your application or participation.",
       "Our total liability for any claim arising out of this competition is limited to the application fee paid by the claimant, if any.",
       "Nothing in this section limits liability that cannot be limited under Ethiopian law (for example, liability for death or personal injury caused by negligence).",
     ],
@@ -109,7 +109,7 @@ export default function TermsPage() {
         <span className="gradient-text">competition rules</span>
       </h1>
       <p className="mt-4 text-muted-foreground text-lg">
-        Plain-language terms for entering The Bling Records Show. Read these
+        Plain-language terms for entering The Bling Records Talent Show. Read these
         before you apply — by submitting a registration you are agreeing to
         every section below.
       </p>

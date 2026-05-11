@@ -12,7 +12,8 @@
     "db:init": "tsx --env-file=.env.local scripts/db-init.ts",
     "db:seed": "tsx --env-file=.env.local scripts/db-seed.ts",
     "db:reset": "tsx --env-file=.env.local scripts/db-reset.ts && npm run db:seed",
-    "qa:smoke": "tsx --env-file=.env.local scripts/qa-smoke.ts"
+    "qa:smoke": "tsx --env-file=.env.local scripts/qa-smoke.ts",
+    "deploy": "bash scripts/deploy.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

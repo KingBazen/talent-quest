@@ -14,7 +14,7 @@ const SECTIONS = [
     id: "you-own-your-work",
     title: "1. You keep ownership of your audition",
     body: [
-      "When you upload an audition video to The Bling Records Show, you keep full ownership of the underlying performance, the song, the lyrics, and the recording. We do not buy your music. We do not claim a share of your masters or your publishing.",
+      "When you upload an audition video to The Bling Records Talent Show, you keep full ownership of the underlying performance, the song, the lyrics, and the recording. We do not buy your music. We do not claim a share of your masters or your publishing.",
       "What you grant us is a license to use the audition video for the specific purposes described below — nothing more.",
     ],
   },
@@ -22,7 +22,7 @@ const SECTIONS = [
     id: "license-granted",
     title: "2. The license you grant on submission",
     body: [
-      "By submitting an audition video you grant Bling Records and Neo Studios a non-exclusive, worldwide, royalty-free license to: (a) host and play the video on this site for evaluation by referees and admins; (b) include excerpts in production materials, episode promos, and broadcast for the season in which the video was submitted; (c) use the video in marketing for The Bling Records Show across our owned channels (this site, our social accounts, and partner press placements).",
+      "By submitting an audition video you grant Bling Records and Neo Studios a non-exclusive, worldwide, royalty-free license to: (a) host and play the video on this site for evaluation by referees and admins; (b) include excerpts in production materials, episode promos, and broadcast for the season in which the video was submitted; (c) use the video in marketing for The Bling Records Talent Show across our owned channels (this site, our social accounts, and partner press placements).",
       "The license is for the season in which you submitted, plus a 24-month tail for marketing and historical / archive use. After that window, the marketing use ceases; we keep the video for historical / archive purposes only.",
       "The license is non-transferable to third parties without your consent. We do not sub-license your audition to advertisers, brand partners, or other media companies.",
     ],
@@ -49,8 +49,8 @@ const SECTIONS = [
     id: "publicity",
     title: "5. Publicity & likeness release",
     body: [
-      "By participating in The Bling Records Show, you agree that Bling Records and Neo Studios may use your name, stage name, image, voice, biographical details (as supplied during registration), and performance footage in promotional materials, broadcast episodes, and press around the show.",
-      "This release is for the duration of the season plus the 24-month marketing tail described in §2. We do not use your likeness in ways unrelated to The Bling Records Show without your written consent.",
+      "By participating in The Bling Records Talent Show, you agree that Bling Records and Neo Studios may use your name, stage name, image, voice, biographical details (as supplied during registration), and performance footage in promotional materials, broadcast episodes, and press around the show.",
+      "This release is for the duration of the season plus the 24-month marketing tail described in §2. We do not use your likeness in ways unrelated to The Bling Records Talent Show without your written consent.",
       "If you withdraw, we stop using your likeness in new marketing materials immediately. Already-published materials (episodes that have aired, marketing posts that have shipped) are not retroactively edited; they remain as historical record.",
     ],
   },

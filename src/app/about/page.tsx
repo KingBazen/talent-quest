@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About the show",
   description:
-    "The Bling Records Show is a music-first reality competition built by Bling Records and Neo Studios — an audition pipeline that runs from a 6-digit contestant ID to the music house.",
+    "The Bling Records Talent Show is a music-first reality competition built by Bling Records and Neo Studios — an audition pipeline that runs from a 6-digit contestant ID to the music house.",
 };
 
 export default function AboutPage() {
@@ -20,7 +20,7 @@ export default function AboutPage() {
           <span className="gradient-text">made for Ethiopia</span>.
         </h1>
         <p className="mt-4 text-muted-foreground text-lg">
-          The Bling Records Show is a music-focused talent competition built by{" "}
+          The Bling Records Talent Show is a music-focused talent competition built by{" "}
           <strong className="text-foreground">Bling Records</strong> in
           partnership with{" "}
           <strong className="text-foreground">Neo Studios</strong>. We&apos;re

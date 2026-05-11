@@ -1,4 +1,4 @@
-# Mobile app — The Bling Records Show
+# Mobile app — The Bling Records Talent Show
 
 React Native + Expo + TypeScript + NativeWind. Lives at `apps/mobile/` inside the main monorepo so it can share types with the Next.js web app at the repo root.
 

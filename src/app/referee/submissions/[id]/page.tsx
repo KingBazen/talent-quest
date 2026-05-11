@@ -43,8 +43,21 @@ interface DetailResponse {
     cloudinaryPublicId: string | null;
     width: number | null;
     height: number | null;
+    slot: "main" | "extra_1" | "extra_2";
     createdAt: string;
   };
+  /** Phase 13: optional supplementary videos. Review-only — scoring still
+   *  applies to the main submission. */
+  extras: {
+    id: string;
+    slot: "main" | "extra_1" | "extra_2";
+    title: string;
+    videoUrl: string | null;
+    durationSec: number | null;
+    width: number | null;
+    height: number | null;
+    createdAt: string;
+  }[];
   contestant: {
     id: string;
     displayName: string;
@@ -223,6 +236,9 @@ export default function RefereeDetailPage() {
               <Badge variant="secondary" className="font-mono">
                 ID {data.contestant?.id ?? "—"}
               </Badge>
+              <Badge variant="outline" className="text-[10px]">
+                main competition video
+              </Badge>
             </div>
             <h2 className="font-display text-2xl font-bold">
               {data.submission.title}
@@ -241,6 +257,24 @@ export default function RefereeDetailPage() {
               {data.aggregate.judgesCount === 1 ? "judge" : "judges"}
             </p>
           </div>
+
+          {data.extras.length > 0 && (
+            <div className="border-t border-border/60 p-5 space-y-3 bg-muted/20">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">
+                  More from this contestant ({data.extras.length})
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Review-only · scoring applies to the main video
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.extras.map((x) => (
+                  <ExtraVideo key={x.id} extra={x} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Score panel */}
@@ -492,4 +526,64 @@ function badgeForStatus(
     case "superseded":
       return "secondary";
   }
+}
+
+function ExtraVideo({
+  extra,
+}: {
+  extra: DetailResponse["extras"][number];
+}) {
+  // Inline-playable URLs are direct video files or Cloudinary delivery URLs.
+  // Foreign embeds (YouTube, Drive previews) get a click-through link instead
+  // of a broken <video> element.
+  const playable = (() => {
+    if (!extra.videoUrl) return false;
+    try {
+      const u = new URL(extra.videoUrl);
+      if (u.hostname.includes("res.cloudinary.com")) return true;
+      return /\.(mp4|webm|m4v|mov|ogv)(?:\?|$)/i.test(u.pathname);
+    } catch {
+      return false;
+    }
+  })();
+  const slotLabel = extra.slot === "extra_1" ? "Extra 1" : "Extra 2";
+  return (
+    <div className="rounded-xl border border-border/60 bg-background overflow-hidden">
+      <div className="relative aspect-video bg-black">
+        {extra.videoUrl && playable ? (
+          <video
+            controls
+            preload="metadata"
+            className="w-full h-full"
+            src={extra.videoUrl}
+          />
+        ) : extra.videoUrl ? (
+          <a
+            href={extra.videoUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="absolute inset-0 flex items-center justify-center text-white/80 text-sm hover:text-white"
+          >
+            Open external link ↗
+          </a>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-white/60 text-xs">
+            No URL on file
+          </div>
+        )}
+      </div>
+      <div className="p-3 text-xs">
+        <div className="flex items-center gap-1.5 mb-1">
+          <Badge variant="outline" className="text-[10px]">{slotLabel}</Badge>
+          {extra.durationSec && (
+            <span className="text-muted-foreground">
+              {Math.floor(extra.durationSec / 60)}:
+              {String(extra.durationSec % 60).padStart(2, "0")}
+            </span>
+          )}
+        </div>
+        <p className="font-medium truncate">{extra.title}</p>
+      </div>
+    </div>
+  );
 }

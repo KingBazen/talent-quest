@@ -65,7 +65,7 @@ function renderShell(input: RenderShellInput): { html: string; text: string } {
   <tr><td align="center" style="padding:36px 16px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;background:${BRAND.card};border:1px solid ${BRAND.border};border-radius:16px;">
       <tr><td style="padding:28px 28px 6px 28px;">
-        <p style="margin:0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${BRAND.mute};">The Bling Records Show</p>
+        <p style="margin:0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${BRAND.mute};">The Bling Records Talent Show</p>
         <h1 style="margin:6px 0 14px 0;font-size:24px;line-height:1.2;color:${BRAND.text};">${escapeHtml(input.heading)}</h1>
       </td></tr>
       <tr><td style="padding:0 28px 22px 28px;">
@@ -90,7 +90,7 @@ function renderShell(input: RenderShellInput): { html: string; text: string } {
     input.cta ? `\n${input.cta.label}: ${input.cta.href}` : "",
     input.footnote ? `\n${input.footnote}` : "",
     "",
-    "— The Bling Records Show",
+    "— The Bling Records Talent Show",
     "Bling Records × Neo Studios · Addis Ababa",
     "We will never ask for your password by email.",
   ].filter(Boolean);
@@ -114,14 +114,14 @@ export function welcomeEmail(input: {
   contestantId: string;
   verifyLink: string;
 }): { subject: string; html: string; text: string } {
-  const subject = "Welcome to The Bling Records Show";
+  const subject = "Welcome to The Bling Records Talent Show";
   const { html, text } = renderShell({
     preheader: `Your contestant ID is ${input.contestantId}. Verify your email to keep your application active.`,
     heading: `Welcome, ${input.fullName}.`,
     paragraphs: [
       `Your contestant ID is ${input.contestantId}. Save it — you'll use it to track your progress on the result-checker.`,
       "Before you submit your audition, please verify your email address. We use it to send status updates after each round.",
-      "If you didn't apply to The Bling Records Show, just ignore this email — your address will be removed within 24 hours.",
+      "If you didn't apply to The Bling Records Talent Show, just ignore this email — your address will be removed within 24 hours.",
     ],
     cta: { label: "Verify your email", href: input.verifyLink },
     footnote:
@@ -137,7 +137,7 @@ export function verifyEmail(input: { fullName: string; verifyLink: string }): {
   html: string;
   text: string;
 } {
-  const subject = "Verify your email — The Bling Records Show";
+  const subject = "Verify your email — The Bling Records Talent Show";
   const { html, text } = renderShell({
     preheader:
       "One quick click to verify your email and keep your application active.",
@@ -163,7 +163,7 @@ export function statusChangeEmail(input: {
 }): { subject: string; html: string; text: string } {
   const lang: Lang = input.lang ?? "en";
   const c = statusCopy(input.status, lang);
-  const subject = `${c.label} — The Bling Records Show`;
+  const subject = `${c.label} — The Bling Records Talent Show`;
   const paragraphs = [
     `${input.fullName}, your application status is now: ${c.label}.`,
     c.description,

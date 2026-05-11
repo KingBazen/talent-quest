@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "How auditions work",
   description:
-    "From a 6-digit ID to the music house — the audition pipeline for The Bling Records Show, end to end.",
+    "From a 6-digit ID to the music house — the audition pipeline for The Bling Records Talent Show, end to end.",
 };
 
 const FLOW = [

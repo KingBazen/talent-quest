@@ -14,7 +14,7 @@ interface LegalDraftBannerProps {
 }
 
 /**
- * Prominent draft notice for every legal page. The Bling Records Show is
+ * Prominent draft notice for every legal page. The Bling Records Talent Show is
  * pre-launch and these pages are placeholder text written by the build team —
  * they are NOT legal advice and must be replaced (or signed off) by counsel
  * before any production deploy. The §8 Pre-Production Gate in the task

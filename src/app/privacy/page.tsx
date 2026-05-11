@@ -6,7 +6,7 @@ import { LegalDraftBanner } from "@/components/legal/LegalDraftBanner";
 export const metadata: Metadata = {
   title: "Privacy policy",
   description:
-    "How The Bling Records Show collects, uses, and protects contestant data. Draft placeholder — must be reviewed by counsel before production launch.",
+    "How The Bling Records Talent Show collects, uses, and protects contestant data. Draft placeholder — must be reviewed by counsel before production launch.",
 };
 
 const SECTIONS = [

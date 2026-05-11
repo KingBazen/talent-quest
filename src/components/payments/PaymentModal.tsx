@@ -419,7 +419,7 @@ function BankTransferPanel({
         </div>
         <dl className="text-xs text-muted-foreground grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
           <dt>Account name</dt>
-          <dd className="font-mono">Bling Records Show PLC</dd>
+          <dd className="font-mono">Bling Records Talent Show PLC</dd>
           <dt>Amount</dt>
           <dd className="font-mono">ETB {(intent.amountCents / 100).toFixed(2)}</dd>
           <dt>Reference</dt>

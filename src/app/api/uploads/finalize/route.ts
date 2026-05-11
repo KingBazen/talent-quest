@@ -4,7 +4,7 @@ import { ApiError, getUserById, requireRole } from "@/lib/auth";
 import {
   createSubmission,
   getContestantByUserId,
-  getLatestSubmissionForContestant,
+  getLatestSubmissionForSlot,
 } from "@/lib/contestants";
 import { submissionToDTO } from "@/lib/dto";
 import { hasPaidSubmissionFee } from "@/lib/payments";
@@ -36,6 +36,9 @@ const Body = z.object({
     "instruments",
     "other",
   ]),
+  // Phase 13: which slot this upload fills. 'main' is the competition entry,
+  // extras are optional supplementary videos for referees.
+  slot: z.enum(["main", "extra_1", "extra_2"]).optional(),
 });
 
 export const POST = route(async (req: Request) => {
@@ -88,7 +91,10 @@ export const POST = route(async (req: Request) => {
     throw new ApiError(422, validation.reason);
   }
 
-  const prior = await getLatestSubmissionForContestant(c.id);
+  const slot = data.slot ?? "main";
+  // Only supersede the prior take in the *same* slot — re-uploading an
+  // extra mustn't replace the competition video and vice-versa.
+  const prior = await getLatestSubmissionForSlot(c.id, slot);
 
   const sub = await createSubmission({
     contestantId: c.id,
@@ -102,6 +108,7 @@ export const POST = route(async (req: Request) => {
     height: resource.height,
     durationSec: Math.round(resource.duration),
     supersedesId: prior?.id ?? null,
+    slot,
   });
 
   return ok({ submission: submissionToDTO(sub) }, { status: 201 });

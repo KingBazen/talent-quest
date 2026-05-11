@@ -19,6 +19,9 @@ export const runtime = "nodejs";
  *   - Email + full_name belong on a separate auth-sensitive flow.
  *   - Consent timestamps are audit-immutable.
  */
+// Phase 13: align with the Ethiopia-market registration shape — the only
+// hard requirement here is `phone` (login key). The rest are optional and
+// may arrive as empty strings when the user is still filling things in.
 const Body = z.object({
   stageName: z.string().max(60).optional().or(z.literal("")),
   phone: z
@@ -26,10 +29,10 @@ const Body = z.object({
     .min(9)
     .regex(/^[\d+\-\s()]+$/, "Numbers only")
     .optional(),
-  city: z.string().min(2).optional(),
+  city: z.string().max(120).optional().or(z.literal("")),
   country: z.string().min(2).max(64).optional(),
-  bio: z.string().min(20).max(500).optional(),
-  experience: z.string().min(1).optional(),
+  bio: z.string().max(500).optional().or(z.literal("")),
+  experience: z.string().optional().or(z.literal("")),
   socialIg: z.string().max(120).optional().or(z.literal("")),
   socialTt: z.string().max(120).optional().or(z.literal("")),
   socialYt: z.string().max(120).optional().or(z.literal("")),

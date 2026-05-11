@@ -46,3 +46,11 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Claude agent settings
+/.claude/
+
+# Owner-only / private docs (not for public repo)
+/OWNER_CHECKLIST.md
+/OWNER_MESSAGE.txt
+/bling_records.pdf

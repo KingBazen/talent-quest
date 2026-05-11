@@ -208,6 +208,15 @@ async function doMigrate(): Promise<void> {
     ALTER TABLE submissions ADD COLUMN IF NOT EXISTS height        INTEGER;
     ALTER TABLE submissions ADD COLUMN IF NOT EXISTS supersedes_id TEXT REFERENCES submissions(id) ON DELETE SET NULL;
     ALTER TABLE submissions ADD COLUMN IF NOT EXISTS superseded_at TEXT;
+    -- Phase 13: per-contestant submission slots. The 'main' slot is the
+    -- competition entry; 'extra_1' and 'extra_2' are optional supplementary
+    -- videos referees can preview when they want more context. Existing rows
+    -- are treated as 'main' so historical data keeps working unchanged.
+    ALTER TABLE submissions ADD COLUMN IF NOT EXISTS slot TEXT NOT NULL DEFAULT 'main';
+    ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_slot_check;
+    ALTER TABLE submissions ADD CONSTRAINT submissions_slot_check
+      CHECK (slot IN ('main','extra_1','extra_2'));
+    CREATE INDEX IF NOT EXISTS idx_submissions_slot ON submissions(contestant_id, slot);
     -- Widen the status CHECK to include the new "superseded" terminal state.
     -- Idempotent: drop-if-exists first, then re-create with the new set.
     ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_status_check;
@@ -931,8 +940,12 @@ export interface SubmissionRow {
   superseded_at: string | null;
   status: "pending" | "approved" | "rejected" | "flagged" | "superseded";
   notes: string | null;
+  /** Phase 13: 'main' = competition entry, 'extra_1' / 'extra_2' = supplementary. */
+  slot: "main" | "extra_1" | "extra_2";
   created_at: string;
 }
+
+export type SubmissionSlot = SubmissionRow["slot"];
 
 export interface ScoreRow {
   id: string;

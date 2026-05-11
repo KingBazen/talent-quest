@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, Sparkles, X, LogOut, Shield, Gavel, User } from "lucide-react";
+import { Menu, X, LogOut, Shield, Gavel, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "@/components/i18n/LangToggle";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/components/auth/SessionProvider";
+import { BlingLogo } from "@/components/brand/BlingLogo";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -37,12 +38,19 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center gap-4">
-        <Link href="/" className="flex items-center gap-2 font-bold">
-          <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-300 via-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <span className="hidden sm:inline-block text-lg tracking-tight">
-            The Bling Records Show
+        <Link
+          href="/"
+          aria-label="Bling Records Talent Show — home"
+          className="flex items-center gap-3 font-bold"
+        >
+          <BlingLogo variant="icon" size={40} />
+          <span className="hidden sm:inline-flex flex-col leading-none">
+            <span className="font-display text-[15px] font-extrabold tracking-tight bg-clip-text text-transparent bg-[linear-gradient(110deg,#fde68a_0%,#facc15_25%,#fff7c2_50%,#eab308_75%,#a16207_100%)] bg-[length:200%_100%] animate-shine">
+              BLING RECORDS
+            </span>
+            <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.32em] text-brand-500/80">
+              Talent Show
+            </span>
           </span>
         </Link>
 

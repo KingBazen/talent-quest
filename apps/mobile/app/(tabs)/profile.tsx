@@ -98,7 +98,7 @@ export default function ProfileTab() {
 
         <View className="mt-12">
           <Text className="text-muted-foreground text-[10px] text-center">
-            The Bling Records Show · v{release}
+            The Bling Records Talent Show · v{release}
           </Text>
           <Text className="text-muted-foreground text-[10px] text-center mt-1">
             Bling Records × Neo Studios

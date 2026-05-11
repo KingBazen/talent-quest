@@ -36,7 +36,7 @@ export interface SendEmailResult {
   error?: string;
 }
 
-const FROM_DEFAULT = "The Bling Records Show <no-reply@blingrecordsshow.com>";
+const FROM_DEFAULT = "The Bling Records Talent Show <no-reply@blingrecordsshow.com>";
 
 function fromAddress(): string {
   return process.env.EMAIL_FROM || FROM_DEFAULT;

@@ -1,7 +1,10 @@
 import { ok, route } from "@/lib/api";
 import { ApiError, requireRole } from "@/lib/auth";
 import { refereeCanAccess } from "@/lib/assignments";
-import { getSubmissionById } from "@/lib/contestants";
+import {
+  getSubmissionById,
+  listExtrasForContestant,
+} from "@/lib/contestants";
 import { aggregateScoresFor, getMyScoreNote, listMyScores } from "@/lib/scores";
 import { queryOne } from "@/lib/db";
 
@@ -58,6 +61,23 @@ export const GET = route(async (_req, ctx: { params: { id: string } }) => {
   const myNote = await getMyScoreNote(session.sub, id);
   const aggregate = await aggregateScoresFor(id);
 
+  // Phase 13: surface the contestant's optional extras alongside the
+  // competition entry so referees who want more context can preview them
+  // without leaving the scoring page. Scoring still applies to the main
+  // submission only — extras are review-only.
+  const extras = (await listExtrasForContestant(submission.contestant_id)).map(
+    (s) => ({
+      id: s.id,
+      slot: s.slot,
+      title: s.title,
+      videoUrl: s.video_url,
+      durationSec: s.duration_sec,
+      width: s.width,
+      height: s.height,
+      createdAt: s.created_at,
+    })
+  );
+
   return ok({
     submission: {
       id: submission.id,
@@ -69,8 +89,10 @@ export const GET = route(async (_req, ctx: { params: { id: string } }) => {
       cloudinaryPublicId: submission.cloudinary_public_id,
       width: submission.width,
       height: submission.height,
+      slot: submission.slot,
       createdAt: submission.created_at,
     },
+    extras,
     contestant: ctx2
       ? {
           id: ctx2.contestant_id,

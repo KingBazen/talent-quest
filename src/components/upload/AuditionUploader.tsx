@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { api, ApiError } from "@/lib/client-api";
-import type { SubmissionDTO } from "@/lib/dto-types";
+import type { SubmissionDTO, SubmissionSlot } from "@/lib/dto-types";
 import type { TalentCategoryId } from "@/types";
 
 // ─── Constraints (mirrored from server, src/lib/uploads.ts) ──────────────────
@@ -91,6 +91,15 @@ export interface AuditionUploaderProps {
   defaultTitle: string;
   category: TalentCategoryId;
   uploadsAvailable: boolean;
+  /** Defaults to 'main' for the competition entry; pass 'extra_1' / 'extra_2'
+   *  for the optional supplementary video slots. */
+  slot?: SubmissionSlot;
+  /** Optional heading override — useful for the extra slots ("Extra video 1"). */
+  heading?: string;
+  /** Optional sub-line override under the heading. */
+  subhead?: string;
+  /** Hide the title input and force the title server-side from the prop. */
+  hideTitle?: boolean;
   onComplete: (submission: SubmissionDTO) => void;
 }
 
@@ -98,6 +107,10 @@ export function AuditionUploader({
   defaultTitle,
   category,
   uploadsAvailable,
+  slot = "main",
+  heading,
+  subhead,
+  hideTitle,
   onComplete,
 }: AuditionUploaderProps) {
   const [state, setState] = React.useState<State>({ kind: "idle" });
@@ -184,8 +197,9 @@ export function AuditionUploader({
         "/api/uploads/finalize",
         {
           publicId: cloudResponse.public_id,
-          title: title.trim(),
+          title: title.trim() || defaultTitle || `Audition (${slot})`,
           category,
+          slot,
         }
       );
 
@@ -252,34 +266,36 @@ export function AuditionUploader({
         </div>
         <div className="flex-1">
           <h3 className="font-display text-xl font-bold">
-            Upload your audition video
+            {heading || "Upload your audition video"}
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            {constraints.minSec}–{constraints.maxSec}s ·{" "}
-            {constraints.acceptedFormats.slice(0, 3).join(" / ")} · ≤{" "}
-            {Math.round(constraints.maxBytes / (1024 * 1024))} MB ·{" "}
-            ≥ {constraints.minHeight}p
+            {subhead ||
+              `${constraints.minSec}–${constraints.maxSec}s · ${constraints.acceptedFormats
+                .slice(0, 3)
+                .join(" / ")} · ≤ ${Math.round(constraints.maxBytes / (1024 * 1024))} MB · ≥ ${constraints.minHeight}p`}
           </p>
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="audition-title" className="text-sm font-semibold">
-          Audition title
-        </Label>
-        <Input
-          id="audition-title"
-          className="mt-1.5"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Tezeta — original arrangement"
-          maxLength={120}
-          disabled={state.kind === "uploading" || state.kind === "finalizing"}
-        />
-      </div>
+      {!hideTitle && (
+        <div>
+          <Label htmlFor={`audition-title-${slot}`} className="text-sm font-semibold">
+            Audition title
+          </Label>
+          <Input
+            id={`audition-title-${slot}`}
+            className="mt-1.5"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Tezeta — original arrangement"
+            maxLength={120}
+            disabled={state.kind === "uploading" || state.kind === "finalizing"}
+          />
+        </div>
+      )}
 
       {state.kind === "idle" && (
-        <FilePicker onFile={onFilePicked} accept="video/*" />
+        <FilePicker onFile={onFilePicked} accept="video/*" inputId={`audition-file-${slot}`} />
       )}
 
       {state.kind === "reading" && (
@@ -335,16 +351,18 @@ export function AuditionUploader({
 function FilePicker({
   onFile,
   accept,
+  inputId = "audition-file",
 }: {
   onFile: (f: File) => void;
   accept: string;
+  inputId?: string;
 }) {
   const ref = React.useRef<HTMLInputElement>(null);
   const [drag, setDrag] = React.useState(false);
 
   return (
     <label
-      htmlFor="audition-file"
+      htmlFor={inputId}
       onDragOver={(e) => {
         e.preventDefault();
         setDrag(true);
@@ -369,7 +387,7 @@ function FilePicker({
       </p>
       <input
         ref={ref}
-        id="audition-file"
+        id={inputId}
         type="file"
         accept={accept}
         className="hidden"

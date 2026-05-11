@@ -11,7 +11,10 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle2,
+  Circle,
   UserMinus,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,19 +35,23 @@ import type { ContestantDTO } from "@/lib/dto-types";
 import { TALENT_CATEGORIES } from "@/data/categories";
 import { useRouter } from "next/navigation";
 
+// Profile fields that the contestant can set themselves. Most are optional so
+// users who skipped step 2 at registration aren't blocked from saving any
+// changes — only `phone` (their primary identifier and login key) is enforced.
 const schema = z.object({
   stageName: z.string().max(60).optional().or(z.literal("")),
   phone: z
     .string()
     .min(9, "Enter a valid phone number")
     .regex(/^[\d+\-\s()]+$/, "Numbers only"),
-  city: z.string().min(2, "City required"),
+  city: z.string().max(120).optional().or(z.literal("")),
   country: z.string().min(2).max(64),
   bio: z
     .string()
-    .min(20, "At least 20 characters")
-    .max(500, "Maximum 500 characters"),
-  experience: z.string().min(1, "Experience level required"),
+    .max(500, "Maximum 500 characters")
+    .optional()
+    .or(z.literal("")),
+  experience: z.string().optional().or(z.literal("")),
   socialIg: z.string().max(120).optional().or(z.literal("")),
   socialTt: z.string().max(120).optional().or(z.literal("")),
   socialYt: z.string().max(120).optional().or(z.literal("")),
@@ -142,6 +149,50 @@ export default function ContestantProfileEditPage() {
   const watchedCity = watch("city");
   const cat = TALENT_CATEGORIES.find((c) => c.id === contestant.category);
 
+  // Profile completeness guidance for first-time / new-to-web users (Ethiopian
+  // market). We surface the same kind of "what to do next" coaching the
+  // homepage does for the 3-step journey, but applied to the profile fields
+  // that boost a contestant's visibility once they're shortlisted.
+  const hasRealEmail = !contestant.email.endsWith("@phone.brs.local");
+  const completeness: { key: string; label: string; done: boolean; hint: string }[] = [
+    {
+      key: "photo",
+      label: "Add a real bio",
+      done: Boolean(contestant.bio && contestant.bio.length >= 20),
+      hint: "20+ characters about your style and story",
+    },
+    {
+      key: "city",
+      label: "Tell us your city",
+      done: Boolean(contestant.city && contestant.city.length >= 2),
+      hint: "Helps us route you to the right regional round",
+    },
+    {
+      key: "experience",
+      label: "Set your experience level",
+      done: Boolean(contestant.experience),
+      hint: "Beginner, intermediate, advanced, or pro",
+    },
+    {
+      key: "social",
+      label: "Link at least one social profile",
+      done: Boolean(
+        contestant.socialIg || contestant.socialTt || contestant.socialYt
+      ),
+      hint: "Instagram, TikTok or YouTube — judges may peek",
+    },
+    {
+      key: "email",
+      label: "Add your email",
+      done: hasRealEmail,
+      hint: "Optional, but lets us reach you with show updates",
+    },
+  ];
+  const doneCount = completeness.filter((c) => c.done).length;
+  const completenessPct = Math.round(
+    (doneCount / completeness.length) * 100
+  );
+
   return (
     <div className="container py-10 md:py-14 max-w-3xl">
       <ContestantSubNav />
@@ -154,6 +205,54 @@ export default function ContestantProfileEditPage() {
         and category are locked after registration — contact support if those
         need to change.
       </p>
+
+      {doneCount < completeness.length && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 rounded-2xl border border-brand-500/30 bg-brand-500/5 p-5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-brand-500" />
+              <p className="text-sm font-semibold">
+                Complete your profile for better visibility
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-brand-600">
+              {doneCount} of {completeness.length} done · {completenessPct}%
+            </span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mb-4">
+            <div
+              className="h-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all"
+              style={{ width: `${completenessPct}%` }}
+            />
+          </div>
+          <ul className="space-y-2">
+            {completeness.map((item) => (
+              <li
+                key={item.key}
+                className="flex items-start gap-2 text-sm"
+              >
+                {item.done ? (
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" />
+                ) : (
+                  <Circle className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                )}
+                <span className={item.done ? "text-muted-foreground line-through" : ""}>
+                  <span className="font-medium text-foreground">{item.label}</span>
+                  <span className="text-muted-foreground"> — {item.hint}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            New to websites? Just tap each empty field below and fill in
+            what you can. You can come back any time.
+          </p>
+        </motion.div>
+      )}
 
       <form
         onSubmit={handleSubmit(onSubmit)}

@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Show format",
   description:
-    "How The Bling Records Show is structured: auditions → twelve-finalist music house → on-screen reality format produced with Neo Studios.",
+    "How The Bling Records Talent Show is structured: auditions → twelve-finalist music house → on-screen reality format produced with Neo Studios.",
 };
 
 const PILLARS = [
@@ -43,7 +43,7 @@ export default function ShowFormatPage() {
           <span className="gradient-text">music house</span>.
         </h1>
         <p className="mt-4 text-muted-foreground text-lg">
-          The Bling Records Show is built around four pillars. Final episode
+          The Bling Records Talent Show is built around four pillars. Final episode
           counts, weekly challenges, and air dates are confirmed by Bling
           Records and Neo Studios closer to season opening.
         </p>

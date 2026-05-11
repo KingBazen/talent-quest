@@ -12,11 +12,12 @@ import {
   ArrowLeft,
   Sparkles,
   CheckCircle2,
-  Lock,
-  CreditCard,
-  Trophy,
+  Pencil,
   Copy,
   ShieldAlert,
+  CreditCard,
+  Video,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,61 +40,71 @@ import type { ContestantDTO } from "@/lib/dto-types";
 import type { TalentCategoryId } from "@/types";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
+//
+// Stakeholder-driven shape (Ethiopian market): phone is the primary identifier
+// because most contestants don't have email. Email, DOB, city, and the entire
+// step-2 "your music" block are optional so users can sign up fast and fill in
+// the rest from their profile page later.
 
-const schema = z
-  .object({
-    fullName: z.string().min(2, "Please enter your full name"),
-    stageName: z.string().optional(),
-    email: z.string().email("Enter a valid email"),
-    password: z
-      .string()
-      .min(8, "At least 8 characters")
-      .max(72, "Maximum 72 characters"),
-    phone: z
-      .string()
-      .min(9, "Enter a valid phone number")
-      .regex(/^[\d+\-\s()]+$/, "Numbers only"),
-    dob: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Date format YYYY-MM-DD")
-      .refine((v) => {
-        const d = new Date(v);
-        return !isNaN(d.getTime()) && d < new Date();
-      }, "Date must be in the past")
-      .refine((v) => {
-        const age = ageFromDob(v);
-        return age >= 13 && age <= 99;
-      }, "You must be between 13 and 99"),
-    city: z.string().min(2, "Where are you based?"),
-    country: z.string().min(2).max(64).default("ET"),
-    category: z.enum(
-      ["rap", "singing", "songwriter", "performance", "instruments", "other"],
-      { errorMap: () => ({ message: "Pick your music category" }) }
-    ),
-    experience: z.string().min(1, "Tell us your level"),
-    bio: z.string().min(20, "Add a short bio (at least 20 characters)").max(500),
-    socialIg: z.string().max(120).optional().or(z.literal("")),
-    socialTt: z.string().max(120).optional().or(z.literal("")),
-    socialYt: z.string().max(120).optional().or(z.literal("")),
-    agreedToRules: z
-      .boolean()
-      .refine((v) => v === true, { message: "You must accept the entry rules" }),
-    agreedToRights: z
-      .boolean()
-      .refine((v) => v === true, {
-        message: "You must accept the content licensing terms",
-      }),
-    agreedToAge: z
-      .boolean()
-      .refine((v) => v === true, {
-        message: "You must confirm your age (and guardian permission if under 18)",
-      }),
-  });
+const schema = z.object({
+  fullName: z.string().min(2, "Please enter your full name"),
+  stageName: z.string().optional(),
+  phone: z
+    .string()
+    .min(9, "Enter a valid phone number")
+    .regex(/^[\d+\-\s()]+$/, "Numbers only"),
+  email: z
+    .string()
+    .email("Enter a valid email")
+    .optional()
+    .or(z.literal("")),
+  password: z
+    .string()
+    .min(8, "At least 8 characters")
+    .max(72, "Maximum 72 characters"),
+  dob: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v),
+      "Date format YYYY-MM-DD"
+    )
+    .refine((v) => {
+      if (!v) return true;
+      const d = new Date(v);
+      return !isNaN(d.getTime()) && d < new Date();
+    }, "Date must be in the past")
+    .refine((v) => {
+      if (!v) return true;
+      const age = ageFromDob(v);
+      return age >= 13 && age <= 99;
+    }, "You must be between 13 and 99"),
+  city: z.string().optional().or(z.literal("")),
+  country: z.string().min(2).max(64).default("ET"),
+  category: z
+    .enum(["rap", "singing", "songwriter", "performance", "instruments", "other"])
+    .optional(),
+  experience: z.string().optional().or(z.literal("")),
+  bio: z
+    .string()
+    .max(500, "Maximum 500 characters")
+    .optional()
+    .or(z.literal("")),
+  socialIg: z.string().max(120).optional().or(z.literal("")),
+  socialTt: z.string().max(120).optional().or(z.literal("")),
+  socialYt: z.string().max(120).optional().or(z.literal("")),
+  agreedToTerms: z
+    .boolean()
+    .refine((v) => v === true, {
+      message: "Please confirm you agree to all the terms below",
+    }),
+});
 
 type FormValues = z.infer<typeof schema>;
 
 const TOTAL_STEPS = 3;
-const DRAFT_KEY = "brs.register.draft.v1";
+const DRAFT_KEY = "brs.register.draft.v2";
 
 function ageFromDob(dob: string): number {
   const d = new Date(dob);
@@ -107,7 +118,6 @@ function ageFromDob(dob: string): number {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { refresh } = useSession();
   const [step, setStep] = React.useState(1);
   const [submitted, setSubmitted] = React.useState<ContestantDTO | null>(null);
@@ -119,9 +129,9 @@ export default function RegisterPage() {
     defaultValues: {
       fullName: "",
       stageName: "",
+      phone: "",
       email: "",
       password: "",
-      phone: "",
       dob: "",
       city: "",
       country: "ET",
@@ -131,9 +141,7 @@ export default function RegisterPage() {
       socialIg: "",
       socialTt: "",
       socialYt: "",
-      agreedToRules: false,
-      agreedToRights: false,
-      agreedToAge: false,
+      agreedToTerms: false,
     },
   });
 
@@ -148,16 +156,11 @@ export default function RegisterPage() {
     getValues,
   } = form;
 
-  // ─── LocalStorage save-resume (P2-T009) ────────────────────────────────────
+  // ─── LocalStorage save-resume ──────────────────────────────────────────────
   // Persist non-sensitive fields between page reloads. We deliberately exclude
-  // `password` and `agreedTo*` so a shared device doesn't auto-resume into a
-  // pre-checked consent state.
-  const SENSITIVE: (keyof FormValues)[] = [
-    "password",
-    "agreedToRules",
-    "agreedToRights",
-    "agreedToAge",
-  ];
+  // `password` and the consent flag so a shared device doesn't auto-resume
+  // into a pre-checked consent state.
+  const SENSITIVE: (keyof FormValues)[] = ["password", "agreedToTerms"];
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -201,12 +204,22 @@ export default function RegisterPage() {
   // ─── Step navigation ───────────────────────────────────────────────────────
   async function next() {
     let fields: (keyof FormValues)[] = [];
-    if (step === 1)
-      fields = ["fullName", "email", "password", "phone", "dob", "city"];
-    if (step === 2) fields = ["category", "experience", "bio"];
+    if (step === 1) fields = ["fullName", "phone", "password", "email", "dob"];
+    // Step 2 has no required fields — the "Skip for now" path uses skip().
+    if (step === 2) fields = ["bio"];
     const ok = await trigger(fields);
     if (!ok) return;
     setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  }
+
+  function skipStep2() {
+    setValue("category", undefined);
+    setValue("experience", "");
+    setValue("bio", "");
+    setValue("socialIg", "");
+    setValue("socialTt", "");
+    setValue("socialYt", "");
+    setStep(3);
   }
 
   function back() {
@@ -220,7 +233,7 @@ export default function RegisterPage() {
         "/api/auth/register",
         {
           ...values,
-          age: ageFromDob(values.dob),
+          age: values.dob ? ageFromDob(values.dob) : undefined,
         }
       );
       await refresh();
@@ -239,7 +252,7 @@ export default function RegisterPage() {
   const isMinor = computedAge !== null && computedAge < 18;
 
   if (submitted) {
-    return <SuccessCard contestant={submitted} />;
+    return <SuccessJourney contestant={submitted} />;
   }
 
   return (
@@ -250,7 +263,7 @@ export default function RegisterPage() {
           Live application · secure account
         </Badge>
         <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
-          Apply to <span className="gradient-text">The Bling Records Show</span>.
+          Apply to <span className="gradient-text">The Bling Records Talent Show</span>.
         </h1>
         <p className="mt-3 text-muted-foreground">
           Three short steps. Your 6-digit contestant ID is created instantly
@@ -263,7 +276,7 @@ export default function RegisterPage() {
           <span>Step {step} of {TOTAL_STEPS}</span>
           <span className="text-muted-foreground">
             {step === 1 && "About you"}
-            {step === 2 && "Your music"}
+            {step === 2 && "Your music (optional)"}
             {step === 3 && "Confirm & submit"}
           </span>
         </div>
@@ -286,33 +299,41 @@ export default function RegisterPage() {
             >
               <Input placeholder="(optional)" {...register("stageName")} />
             </Field>
-            <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Email" error={errors.email?.message}>
-                <Input
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  {...register("email")}
-                />
-              </Field>
-              <Field
-                label="Password"
-                hint="8+ characters"
-                error={errors.password?.message}
-              >
-                <Input
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="••••••••"
-                  {...register("password")}
-                />
-              </Field>
-            </div>
-            <Field label="Phone" error={errors.phone?.message}>
+            <Field
+              label="Phone"
+              hint="We use this to log you in and send updates"
+              error={errors.phone?.message}
+            >
               <Input
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 placeholder="+251 9XX XX XX XX"
                 {...register("phone")}
+              />
+            </Field>
+            <Field
+              label="Email"
+              hint="Optional — add it if you want updates by email too"
+              error={errors.email?.message}
+            >
+              <Input
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com (optional)"
+                {...register("email")}
+              />
+            </Field>
+            <Field
+              label="Password"
+              hint="8+ characters"
+              error={errors.password?.message}
+            >
+              <Input
+                type="password"
+                autoComplete="new-password"
+                placeholder="••••••••"
+                {...register("password")}
               />
             </Field>
             <div className="grid sm:grid-cols-2 gap-5">
@@ -321,7 +342,7 @@ export default function RegisterPage() {
                 hint={
                   computedAge !== null
                     ? `Age ${computedAge}${isMinor ? " — guardian consent required" : ""}`
-                    : "YYYY-MM-DD"
+                    : "Optional · YYYY-MM-DD"
                 }
                 error={errors.dob?.message}
               >
@@ -331,8 +352,12 @@ export default function RegisterPage() {
                   {...register("dob")}
                 />
               </Field>
-              <Field label="City" error={errors.city?.message}>
-                <Input placeholder="Addis Ababa" {...register("city")} />
+              <Field
+                label="City"
+                hint="Optional — where are you based?"
+                error={errors.city?.message}
+              >
+                <Input placeholder="Addis Ababa (optional)" {...register("city")} />
               </Field>
             </div>
           </motion.div>
@@ -344,6 +369,11 @@ export default function RegisterPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-border/60 bg-card p-6 space-y-5"
           >
+            <div className="rounded-xl bg-muted/40 border border-border/60 px-4 py-3 text-xs text-muted-foreground">
+              All fields here are optional. You can skip for now and finish
+              your profile later from the dashboard.
+            </div>
+
             <Field
               label="Music category"
               hint="Pick the one your strongest performance lives in"
@@ -358,7 +388,7 @@ export default function RegisterPage() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pick your category" />
+                  <SelectValue placeholder="Pick your category (optional)" />
                 </SelectTrigger>
                 <SelectContent>
                   {TALENT_CATEGORIES.map((c) => (
@@ -380,13 +410,13 @@ export default function RegisterPage() {
 
             <Field label="Experience level" error={errors.experience?.message}>
               <Select
-                value={watched.experience}
+                value={watched.experience || ""}
                 onValueChange={(v) =>
                   setValue("experience", v, { shouldValidate: true })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="How long have you been performing?" />
+                  <SelectValue placeholder="How long have you been performing? (optional)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="beginner">
@@ -407,7 +437,7 @@ export default function RegisterPage() {
 
             <Field
               label="Short bio"
-              hint="What makes your sound yours? (20–500 chars)"
+              hint="Optional — what makes your sound yours? (up to 500 chars)"
               error={errors.bio?.message}
             >
               <Textarea
@@ -455,33 +485,57 @@ export default function RegisterPage() {
             className="rounded-2xl border border-border/60 bg-card p-6 space-y-5"
           >
             <div>
-              <p className="text-sm font-semibold mb-3">Quick review</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">Quick review</p>
+                <p className="text-xs text-muted-foreground">
+                  Tap any row to edit
+                </p>
+              </div>
               <dl className="grid sm:grid-cols-2 gap-3 text-sm">
-                {[
-                  ["Name", watched.fullName],
-                  ["Stage name", watched.stageName || "—"],
-                  ["Email", watched.email],
-                  ["Phone", watched.phone],
-                  [
-                    "DOB · age",
+                <ReviewRow
+                  label="Name"
+                  value={watched.fullName}
+                  onEdit={() => setStep(1)}
+                />
+                <ReviewRow
+                  label="Stage name"
+                  value={watched.stageName || "—"}
+                  onEdit={() => setStep(1)}
+                />
+                <ReviewRow
+                  label="Phone"
+                  value={watched.phone}
+                  onEdit={() => setStep(1)}
+                />
+                <ReviewRow
+                  label="Email"
+                  value={watched.email || "(optional — not provided)"}
+                  onEdit={() => setStep(1)}
+                />
+                <ReviewRow
+                  label="DOB · age"
+                  value={
                     watched.dob
                       ? `${watched.dob} · ${ageFromDob(watched.dob)}`
-                      : "—",
-                  ],
-                  ["City", watched.city],
-                  ["Category", selectedCat?.name],
-                  ["Experience", watched.experience],
-                ].map(([k, v]) => (
-                  <div
-                    key={String(k)}
-                    className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-background px-3 py-2"
-                  >
-                    <dt className="text-muted-foreground">{k}</dt>
-                    <dd className="font-medium text-right">
-                      {String(v ?? "—")}
-                    </dd>
-                  </div>
-                ))}
+                      : "—"
+                  }
+                  onEdit={() => setStep(1)}
+                />
+                <ReviewRow
+                  label="City"
+                  value={watched.city || "—"}
+                  onEdit={() => setStep(1)}
+                />
+                <ReviewRow
+                  label="Category"
+                  value={selectedCat?.name || "—"}
+                  onEdit={() => setStep(2)}
+                />
+                <ReviewRow
+                  label="Experience"
+                  value={watched.experience || "—"}
+                  onEdit={() => setStep(2)}
+                />
               </dl>
             </div>
 
@@ -489,68 +543,40 @@ export default function RegisterPage() {
               <ShieldAlert className="h-5 w-5 shrink-0 text-emerald-500 mt-0.5" />
               <div className="space-y-2">
                 <p className="font-semibold">Your data is secured</p>
-                <ul className="space-y-1 text-muted-foreground list-disc pl-4">
-                  <li>Password hashed with bcrypt; never stored in plain text.</li>
-                  <li>Session cookie is HTTP-only, signed with HS256 JWT.</li>
-                  <li>
-                    Registration is free. The 500 ETB audition fee is paid
-                    after sign-up — before you can upload your video.
-                  </li>
-                </ul>
+                <p className="text-muted-foreground">
+                  Registration is free. The 500 ETB audition fee is paid
+                  after sign-up — before you can upload your video.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Field error={errors.agreedToRules?.message}>
+            <div className="rounded-xl border border-border/60 bg-background p-5 space-y-4">
+              <p className="text-sm font-semibold">By creating your account, you agree to:</p>
+              <ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5">
+                <li>
+                  The Bling Records Talent Show <Link href="/terms" target="_blank" className="underline hover:text-foreground">entry rules</Link> and eligibility terms.
+                </li>
+                <li>
+                  The <Link href="/content-rights" target="_blank" className="underline hover:text-foreground">content licensing terms</Link> — you allow your audition video to be reviewed, broadcast, and used for show promotion.
+                </li>
+                <li>
+                  {isMinor
+                    ? "Confirming you are 13 or older AND that your parent or legal guardian has given permission for you to apply."
+                    : "Confirming you are 18 or older (13–17 must have a parent or legal guardian's permission)."}
+                </li>
+              </ul>
+              <Field error={errors.agreedToTerms?.message}>
                 <Checkbox
-                  checked={watched.agreedToRules}
+                  checked={watched.agreedToTerms}
                   onChange={(e) =>
-                    setValue("agreedToRules", e.target.checked, {
+                    setValue("agreedToTerms", e.target.checked, {
                       shouldValidate: true,
                     })
                   }
                   label={
-                    <span>
-                      I agree to The Bling Records Show entry rules and
-                      eligibility terms.
+                    <span className="text-foreground">
+                      I have read and agree to all of the above.
                     </span>
-                  }
-                />
-              </Field>
-              <Field error={errors.agreedToRights?.message}>
-                <Checkbox
-                  checked={watched.agreedToRights}
-                  onChange={(e) =>
-                    setValue("agreedToRights", e.target.checked, {
-                      shouldValidate: true,
-                    })
-                  }
-                  label={
-                    <span>
-                      I license my audition video for review, broadcast, and
-                      promotional use as set out in the content licensing
-                      terms.
-                    </span>
-                  }
-                />
-              </Field>
-              <Field error={errors.agreedToAge?.message}>
-                <Checkbox
-                  checked={watched.agreedToAge}
-                  onChange={(e) =>
-                    setValue("agreedToAge", e.target.checked, {
-                      shouldValidate: true,
-                    })
-                  }
-                  label={
-                    isMinor ? (
-                      <span>
-                        I confirm I am 13 or older <strong>and</strong> have
-                        my parent or legal guardian&apos;s permission to apply.
-                      </span>
-                    ) : (
-                      <span>I confirm I am 18 or older.</span>
-                    )
                   }
                 />
               </Field>
@@ -561,16 +587,10 @@ export default function RegisterPage() {
                 {serverError}
               </p>
             )}
-
-            <div className="grid sm:grid-cols-3 gap-3 text-xs text-muted-foreground">
-              <FuturePill icon={Lock} label="Bcrypt + JWT auth" />
-              <FuturePill icon={CreditCard} label="Fee at shortlist" />
-              <FuturePill icon={Trophy} label="Persisted scoring" />
-            </div>
           </motion.div>
         )}
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           {step > 1 ? (
             <Button type="button" variant="outline" onClick={back}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -584,15 +604,23 @@ export default function RegisterPage() {
             </Link>
           )}
           {step < TOTAL_STEPS ? (
-            <Button type="button" variant="gradient" onClick={next}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2 ml-auto">
+              {step === 2 && (
+                <Button type="button" variant="ghost" onClick={skipStep2}>
+                  Skip for now
+                </Button>
+              )}
+              <Button type="button" variant="gradient" onClick={next}>
+                Continue <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           ) : (
             <Button
               type="submit"
               variant="gradient"
               size="lg"
               disabled={isSubmitting}
+              className="ml-auto"
             >
               {isSubmitting ? "Creating account…" : "Create my account"}
               <Sparkles className="ml-2 h-4 w-4" />
@@ -633,22 +661,42 @@ function Field({
   );
 }
 
-function FuturePill({
-  icon: Icon,
+function ReviewRow({
   label,
+  value,
+  onEdit,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
   label: string;
+  value: string | undefined;
+  onEdit: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2 flex items-center gap-2">
-      <Icon className="h-3.5 w-3.5" />
-      {label}
-    </div>
+    <button
+      type="button"
+      onClick={onEdit}
+      className="group flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-background px-3 py-2 text-left transition-colors hover:border-brand-500/50 hover:bg-brand-500/5"
+    >
+      <div className="min-w-0">
+        <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+        <span className="block font-medium truncate">
+          {value || "—"}
+        </span>
+      </div>
+      <Pencil className="h-3.5 w-3.5 shrink-0 mt-1 text-muted-foreground group-hover:text-brand-500" />
+    </button>
   );
 }
 
-function SuccessCard({ contestant }: { contestant: ContestantDTO }) {
+// ─── Success: 3-step journey card ────────────────────────────────────────────
+//
+// After registration we want every user — especially first-time web users in
+// Ethiopia — to see exactly what comes next. So instead of a generic "you're
+// in" screen we show the same three-step journey as the homepage with step 1
+// marked complete and step 2 highlighted as the next action.
+
+function SuccessJourney({ contestant }: { contestant: ContestantDTO }) {
   const [copied, setCopied] = React.useState(false);
   const router = useRouter();
 
@@ -659,23 +707,23 @@ function SuccessCard({ contestant }: { contestant: ContestantDTO }) {
   }
 
   return (
-    <div className="container py-16 max-w-2xl">
+    <div className="container py-12 md:py-16 max-w-4xl">
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="rounded-3xl border border-border/60 bg-card p-8 md:p-10 text-center stage-glow"
+        className="rounded-3xl border border-border/60 bg-card p-6 md:p-10 text-center stage-glow"
       >
-        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white mx-auto">
-          <CheckCircle2 className="h-7 w-7" />
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white mx-auto">
+          <CheckCircle2 className="h-8 w-8" />
         </div>
         <h1 className="mt-5 font-display text-3xl md:text-4xl font-bold">
-          You&apos;re on the stage list, {contestant.fullName.split(" ")[0]}.
+          Step 1 complete, {contestant.fullName.split(" ")[0]}!
         </h1>
         <p className="mt-2 text-muted-foreground">
-          This is your contestant ID. Save it — anyone can use it on the
-          Result Checker.
+          Your account is created. Save your contestant ID — anyone can use it
+          on the Result Checker.
         </p>
-        <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-muted px-5 py-3">
+        <div className="mt-5 inline-flex items-center gap-3 rounded-2xl bg-muted px-5 py-3">
           <span className="font-mono text-3xl md:text-4xl font-bold tracking-widest gradient-text">
             {contestant.id}
           </span>
@@ -684,50 +732,128 @@ function SuccessCard({ contestant }: { contestant: ContestantDTO }) {
             {copied ? "Copied" : "Copy"}
           </Button>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          IDs are unique 6-digit numbers, collision-checked at allocation.
-        </p>
 
-        <div className="grid sm:grid-cols-3 gap-3 mt-8 text-left">
-          <Link
-            href="/contestant/dashboard"
-            className="rounded-xl border border-border/60 bg-background p-4 hover:border-brand-500/50 transition-colors"
-          >
-            <p className="text-sm font-semibold">Open dashboard</p>
-            <p className="text-xs text-muted-foreground">
-              Track your application + submission.
-            </p>
-          </Link>
-          <Link
+        <div className="mt-8 grid sm:grid-cols-3 gap-3 text-left">
+          <JourneyCard
+            n="1"
+            title="Register"
+            body="Account created and 6-digit ID assigned."
+            done
+          />
+          <JourneyCard
+            n="2"
+            title="Pay 500 ETB"
+            body="AdmasPay or upload a bank-transfer receipt. Required before you can upload your video."
+            current
+            cta="Pay audition fee"
+            href="/contestant/payment"
+            icon={CreditCard}
+          />
+          <JourneyCard
+            n="3"
+            title="Upload your audition"
+            body="60–180 seconds. Phone-shot is fine. Available after your payment is confirmed."
+            cta="See upload guide"
             href="/upload-guide"
-            className="rounded-xl border border-border/60 bg-background p-4 hover:border-brand-500/50 transition-colors"
-          >
-            <p className="text-sm font-semibold">Audition guide</p>
-            <p className="text-xs text-muted-foreground">
-              Record a great submission.
-            </p>
-          </Link>
-          <Link
-            href="/result-checker"
-            className="rounded-xl border border-border/60 bg-background p-4 hover:border-brand-500/50 transition-colors"
-          >
-            <p className="text-sm font-semibold">Result checker</p>
-            <p className="text-xs text-muted-foreground">Try your ID now.</p>
-          </Link>
+            icon={Video}
+          />
         </div>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-2 justify-center">
           <Button
             variant="gradient"
-            onClick={() => router.push("/contestant/dashboard")}
+            size="lg"
+            onClick={() => router.push("/contestant/payment")}
           >
-            Open my dashboard <ArrowRight className="ml-2 h-4 w-4" />
+            Continue to payment <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
-          <Button variant="ghost" onClick={() => router.push("/")}>
-            Back to home
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => router.push("/contestant/profile")}
+          >
+            <UserCheck className="mr-2 h-4 w-4" />
+            Complete your profile
           </Button>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+function JourneyCard({
+  n,
+  title,
+  body,
+  done,
+  current,
+  cta,
+  href,
+  icon: Icon,
+}: {
+  n: string;
+  title: string;
+  body: string;
+  done?: boolean;
+  current?: boolean;
+  cta?: string;
+  href?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div
+      className={`relative rounded-2xl border p-5 ${
+        done
+          ? "border-emerald-500/40 bg-emerald-500/5"
+          : current
+          ? "border-brand-500 bg-brand-500/5 ring-2 ring-brand-500/20"
+          : "border-border/60 bg-background"
+      }`}
+    >
+      <span
+        className={`absolute -top-3 right-4 rounded-full px-3 py-1 text-xs font-bold text-white ${
+          done
+            ? "bg-emerald-500"
+            : current
+            ? "bg-gradient-to-r from-brand-400 to-brand-600"
+            : "bg-muted-foreground/60"
+        }`}
+      >
+        {done ? "✓" : n}
+      </span>
+      {Icon && (
+        <div
+          className={`inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3 ${
+            current
+              ? "bg-brand-500/15 text-brand-500"
+              : "bg-muted text-muted-foreground"
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+      )}
+      <h3 className="font-display text-lg font-bold flex items-center gap-2">
+        {title}
+        {current && (
+          <Badge variant="gradient" className="text-[10px]">
+            Next step
+          </Badge>
+        )}
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+      {cta && href && (
+        <Button
+          asChild
+          size="sm"
+          variant={current ? "gradient" : "outline"}
+          className="mt-3"
+        >
+          <Link href={href}>
+            {cta}
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      )}
     </div>
   );
 }

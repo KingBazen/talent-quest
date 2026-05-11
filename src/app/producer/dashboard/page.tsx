@@ -145,7 +145,7 @@ export default function ProducerDashboardPage() {
             required
             minLength={2}
             maxLength={120}
-            placeholder="e.g. Bling Records Show — Season 1"
+            placeholder="e.g. Bling Records Talent Show — Season 1"
             className="mt-1.5"
           />
         </div>

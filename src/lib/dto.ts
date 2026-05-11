@@ -127,6 +127,7 @@ export interface SubmissionDTO {
   supersedesId: string | null;
   status: SubmissionRow["status"];
   notes: string | null;
+  slot: SubmissionRow["slot"];
   createdAt: string;
 }
 
@@ -146,6 +147,7 @@ export function submissionToDTO(s: SubmissionRow): SubmissionDTO {
     supersedesId: s.supersedes_id,
     status: s.status,
     notes: s.notes,
+    slot: s.slot,
     createdAt: s.created_at,
   };
 }

@@ -16,7 +16,10 @@ import { api, ApiError } from "@/lib/client-api";
 import { useSession } from "@/components/auth/SessionProvider";
 
 const schema = z.object({
-  email: z.string().email("Enter a valid email"),
+  // Field is named `email` for backwards compatibility with the mobile app
+  // and existing API contract; on the wire the server accepts either a
+  // phone number or an email here.
+  email: z.string().min(1, "Enter your phone or email"),
   password: z.string().min(1, "Enter your password"),
 });
 
@@ -78,8 +81,8 @@ function LoginInner() {
         Welcome <span className="gradient-text">back</span>.
       </h1>
       <p className="mt-3 text-muted-foreground">
-        Sign in with the email you used to register. Admin and referee
-        accounts use the same form.
+        Sign in with the phone number (or email) you used to register. Admin
+        and referee accounts use the same form.
       </p>
 
       <motion.form
@@ -89,11 +92,13 @@ function LoginInner() {
         className="mt-8 rounded-2xl border border-border/60 bg-card p-6 space-y-4"
       >
         <div>
-          <Label className="text-sm font-semibold">Email</Label>
+          <Label className="text-sm font-semibold">Phone or email</Label>
           <Input
             className="mt-1.5"
-            type="email"
-            autoComplete="email"
+            type="text"
+            inputMode="email"
+            autoComplete="username"
+            placeholder="+251 9XX XX XX XX or you@example.com"
             {...register("email")}
           />
           {errors.email && (

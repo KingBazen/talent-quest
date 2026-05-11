@@ -13,6 +13,9 @@ import {
   Loader2,
   CreditCard,
   CheckCircle2,
+  Star,
+  Plus,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +29,11 @@ import { ContestantSubNav } from "@/components/contestant/SubNav";
 import { VerifyEmailBanner } from "@/components/contestant/VerifyEmailBanner";
 import { AuditionUploader } from "@/components/upload/AuditionUploader";
 import { api, ApiError } from "@/lib/client-api";
-import type { ContestantDTO, SubmissionDTO } from "@/lib/dto-types";
+import type {
+  ContestantDTO,
+  SubmissionDTO,
+  SubmissionSlot,
+} from "@/lib/dto-types";
 import { statusCopy } from "@/lib/status-copy";
 
 export default function DashboardPage() {
@@ -238,6 +245,37 @@ export default function DashboardPage() {
   );
 }
 
+// Phase 13: three-slot submission flow. Each slot gets its own card with the
+// local-upload picker as the main option and a YouTube/URL paste as an
+// alternative. The competition slot is required; the two extras are optional
+// supplementary videos referees can review when they want more context.
+const SLOT_META: Record<
+  SubmissionSlot,
+  { number: string; title: string; subtitle: string; required: boolean }
+> = {
+  main: {
+    number: "1",
+    title: "Main competition video",
+    subtitle:
+      "60–180s · phone-shot is fine. This is the take referees score against the rubric.",
+    required: true,
+  },
+  extra_1: {
+    number: "2",
+    title: "Extra video (optional)",
+    subtitle:
+      "A different song, instrument, or angle. Referees can preview this if they want more of you.",
+    required: false,
+  },
+  extra_2: {
+    number: "3",
+    title: "Another extra video (optional)",
+    subtitle:
+      "One more clip — original song, live set, anything that adds to your story.",
+    required: false,
+  },
+};
+
 function SubmissionTab({
   contestant,
   submissions,
@@ -248,7 +286,6 @@ function SubmissionTab({
   onChange: () => Promise<void>;
 }) {
   const [uploadsAvailable, setUploadsAvailable] = React.useState(false);
-  const [showUrlFallback, setShowUrlFallback] = React.useState(false);
 
   React.useEffect(() => {
     api
@@ -257,58 +294,54 @@ function SubmissionTab({
       .catch(() => setUploadsAvailable(false));
   }, []);
 
+  // Latest non-superseded submission per slot. We render the slot card from
+  // here so a contestant who already filled a slot sees their video and a
+  // "replace" affordance instead of the empty picker.
+  const bySlot: Record<SubmissionSlot, SubmissionDTO | undefined> = {
+    main: submissions.find(
+      (s) => s.slot === "main" && s.status !== "superseded"
+    ),
+    extra_1: submissions.find(
+      (s) => s.slot === "extra_1" && s.status !== "superseded"
+    ),
+    extra_2: submissions.find(
+      (s) => s.slot === "extra_2" && s.status !== "superseded"
+    ),
+  };
+
   return (
     <div className="space-y-5">
       <PaymentSummary />
 
-      {uploadsAvailable && (
-        <AuditionUploader
-          defaultTitle=""
-          category={contestant.category}
-          uploadsAvailable={uploadsAvailable}
-          onComplete={() => {
-            void onChange();
-          }}
-        />
-      )}
+      <SlotCard
+        slot="main"
+        contestant={contestant}
+        current={bySlot.main}
+        uploadsAvailable={uploadsAvailable}
+        onChange={onChange}
+      />
 
-      <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-4">
-        {!uploadsAvailable ? (
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-brand-700/20 text-brand-500">
-              <Upload className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="font-display text-xl font-bold">
-                Submit your audition video
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Direct upload isn&apos;t configured for this environment yet.
-                Paste a public video URL (YouTube / Drive / Cloudinary) below
-                and we&apos;ll review the link.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowUrlFallback((v) => !v)}
-              className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-            >
-              {showUrlFallback ? "Hide" : "Trouble uploading? Paste a URL instead"}
-            </button>
-          </div>
-        )}
+      <SlotCard
+        slot="extra_1"
+        contestant={contestant}
+        current={bySlot.extra_1}
+        uploadsAvailable={uploadsAvailable}
+        onChange={onChange}
+        unlocked={Boolean(bySlot.main)}
+      />
 
-        {(!uploadsAvailable || showUrlFallback) && (
-          <UrlFallbackForm contestant={contestant} onChange={onChange} />
-        )}
-      </div>
+      <SlotCard
+        slot="extra_2"
+        contestant={contestant}
+        current={bySlot.extra_2}
+        uploadsAvailable={uploadsAvailable}
+        onChange={onChange}
+        unlocked={Boolean(bySlot.main)}
+      />
 
       <div className="rounded-2xl border border-border/60 bg-card p-6">
         <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
-          Your submissions ({submissions.length})
+          Submission history ({submissions.length})
         </p>
         {submissions.length === 0 ? (
           <p className="text-sm text-muted-foreground">No submissions yet.</p>
@@ -320,7 +353,12 @@ function SubmissionTab({
                 className="flex items-center justify-between rounded-xl border border-border/60 bg-background px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold">{s.title}</p>
+                  <p className="text-sm font-semibold">
+                    {s.title}{" "}
+                    <Badge variant="outline" className="ml-1 text-[10px]">
+                      {s.slot === "main" ? "main" : s.slot.replace("_", " ")}
+                    </Badge>
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(s.createdAt).toLocaleString()} · {s.status}
                     {s.supersedesId && " · replaces an earlier take"}
@@ -345,13 +383,239 @@ function SubmissionTab({
   );
 }
 
-function UrlFallbackForm({
+function SlotCard({
+  slot,
+  contestant,
+  current,
+  uploadsAvailable,
+  onChange,
+  unlocked = true,
+}: {
+  slot: SubmissionSlot;
+  contestant: ContestantDTO;
+  current: SubmissionDTO | undefined;
+  uploadsAvailable: boolean;
+  onChange: () => Promise<void>;
+  unlocked?: boolean;
+}) {
+  const meta = SLOT_META[slot];
+  const [mode, setMode] = React.useState<"upload" | "url">("upload");
+  const isMain = slot === "main";
+
+  // Extras are gated on having a main video so users finish the required
+  // submission first. We still render the card (so users see what's coming)
+  // but disable the picker until they upload the main competition entry.
+  const locked = !unlocked && !current;
+
+  return (
+    <div
+      className={`rounded-2xl border p-6 space-y-4 ${
+        current
+          ? "border-emerald-500/30 bg-emerald-500/5"
+          : isMain
+          ? "border-brand-500/40 bg-card"
+          : "border-border/60 bg-card"
+      }`}
+    >
+      <div className="flex items-start gap-3 flex-wrap">
+        <div
+          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
+            current
+              ? "bg-emerald-500 text-white"
+              : isMain
+              ? "bg-gradient-to-br from-brand-400 to-brand-600 text-white"
+              : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {current ? <CheckCircle2 className="h-5 w-5" /> : meta.number}
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <h3 className="font-display text-lg font-bold flex items-center gap-2 flex-wrap">
+            {meta.title}
+            {isMain ? (
+              <Badge variant="gradient" className="text-[10px]">
+                <Star className="h-2.5 w-2.5 mr-1" /> Required
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px]">Optional</Badge>
+            )}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{meta.subtitle}</p>
+        </div>
+      </div>
+
+      {current ? (
+        <CurrentVideoPreview
+          submission={current}
+          onReplace={() => {
+            // Toggling to upload mode resets the form; the user can then pick
+            // a new file or paste a URL — the API will mark the prior one as
+            // superseded inside its slot.
+            setMode("upload");
+          }}
+        />
+      ) : locked ? (
+        <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
+          Upload your main competition video first — extras unlock right after.
+        </div>
+      ) : (
+        <>
+          <SlotModeSwitch
+            mode={mode}
+            onMode={setMode}
+            uploadsAvailable={uploadsAvailable}
+          />
+          {mode === "upload" && uploadsAvailable && (
+            <AuditionUploader
+              defaultTitle={
+                isMain
+                  ? ""
+                  : `${contestant.fullName.split(" ")[0]} — extra clip`
+              }
+              category={contestant.category}
+              uploadsAvailable={uploadsAvailable}
+              slot={slot}
+              heading={
+                isMain
+                  ? "Upload from your phone or computer"
+                  : "Upload extra video from your device"
+              }
+              hideTitle={!isMain}
+              onComplete={() => {
+                void onChange();
+              }}
+            />
+          )}
+          {(mode === "url" || !uploadsAvailable) && (
+            <UrlSubmissionForm
+              slot={slot}
+              contestant={contestant}
+              onChange={onChange}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SlotModeSwitch({
+  mode,
+  onMode,
+  uploadsAvailable,
+}: {
+  mode: "upload" | "url";
+  onMode: (m: "upload" | "url") => void;
+  uploadsAvailable: boolean;
+}) {
+  return (
+    <div className="inline-flex rounded-xl border border-border/60 bg-muted/30 p-1 text-xs font-semibold">
+      <button
+        type="button"
+        onClick={() => onMode("upload")}
+        disabled={!uploadsAvailable}
+        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors ${
+          mode === "upload" && uploadsAvailable
+            ? "bg-background text-foreground shadow"
+            : "text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+        }`}
+      >
+        <Upload className="h-3.5 w-3.5" />
+        Upload from device
+        <Badge variant="gradient" className="ml-1 text-[9px]">
+          Recommended
+        </Badge>
+      </button>
+      <button
+        type="button"
+        onClick={() => onMode("url")}
+        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors ${
+          mode === "url"
+            ? "bg-background text-foreground shadow"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Link2 className="h-3.5 w-3.5" />
+        Paste video link
+      </button>
+    </div>
+  );
+}
+
+function CurrentVideoPreview({
+  submission,
+  onReplace,
+}: {
+  submission: SubmissionDTO;
+  onReplace: () => void;
+}) {
+  const [replacing, setReplacing] = React.useState(false);
+
+  if (replacing) {
+    // Returning the parent state to its picker view is handled by the parent
+    // re-rendering after refresh; meanwhile we offer a back-out so the user
+    // doesn't get trapped. The actual picker reappears once the prior
+    // submission row is marked superseded by the next upload.
+    return null;
+  }
+
+  return (
+    <div className="space-y-3">
+      {submission.videoUrl &&
+        (isPlayableMediaUrl(submission.videoUrl) ? (
+          <video
+            controls
+            preload="metadata"
+            className="w-full rounded-xl bg-black"
+            src={submission.videoUrl}
+          />
+        ) : (
+          <a
+            href={submission.videoUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block rounded-xl border border-border/60 bg-background px-4 py-3 text-sm hover:border-brand-500/50 transition-colors"
+          >
+            <span className="font-medium">Open video link</span>{" "}
+            <span className="text-muted-foreground break-all">
+              · {submission.videoUrl}
+            </span>
+          </a>
+        ))}
+      <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground">
+        <span>
+          {submission.title}
+          {" · "}
+          status <span className="font-mono">{submission.status}</span>
+          {" · "}
+          uploaded {new Date(submission.createdAt).toLocaleDateString()}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setReplacing(true);
+            onReplace();
+          }}
+        >
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          Replace
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function UrlSubmissionForm({
+  slot,
   contestant,
   onChange,
 }: {
+  slot: SubmissionSlot;
   contestant: ContestantDTO;
   onChange: () => Promise<void>;
 }) {
+  const isMain = slot === "main";
   const [title, setTitle] = React.useState("");
   const [videoUrl, setVideoUrl] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -363,9 +627,14 @@ function UrlFallbackForm({
     setBusy(true);
     try {
       await api.post("/api/submissions", {
-        title,
+        title:
+          title.trim() ||
+          (isMain
+            ? `${contestant.fullName.split(" ")[0]} — audition`
+            : `${contestant.fullName.split(" ")[0]} — extra`),
         category: contestant.category,
         videoUrl,
+        slot,
       });
       setTitle("");
       setVideoUrl("");
@@ -378,35 +647,57 @@ function UrlFallbackForm({
   }
 
   return (
-    <form onSubmit={submit} className="grid sm:grid-cols-2 gap-3">
-      <input
-        required
-        minLength={2}
-        maxLength={120}
-        placeholder="Audition title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="h-11 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-      />
+    <form
+      onSubmit={submit}
+      className="rounded-xl border border-border/60 bg-background p-4 space-y-3"
+    >
+      <p className="text-xs text-muted-foreground">
+        Already have your video on YouTube, Drive, or another host? Paste the
+        public link here.
+      </p>
+      {isMain && (
+        <input
+          minLength={2}
+          maxLength={120}
+          placeholder="Audition title (optional)"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      )}
       <input
         required
         type="url"
         placeholder="https://youtube.com/watch?v=…"
         value={videoUrl}
         onChange={(e) => setVideoUrl(e.target.value)}
-        className="h-11 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
       />
-      <Button
-        type="submit"
-        variant="outline"
-        disabled={busy}
-        className="sm:col-span-2"
-      >
-        {busy ? "Submitting…" : "Submit URL"}
-      </Button>
-      {err && <p className="text-xs text-destructive sm:col-span-2">{err}</p>}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] text-muted-foreground">
+          Make sure anyone with the link can view it (not private).
+        </p>
+        <Button type="submit" variant="outline" size="sm" disabled={busy}>
+          {busy ? "Saving…" : isMain ? "Submit link" : "Add extra link"}
+        </Button>
+      </div>
+      {err && <p className="text-xs text-destructive">{err}</p>}
     </form>
   );
+}
+
+/** Inline-playable URLs are direct video files (mp4/webm/etc) or Cloudinary
+ *  delivery URLs. Embeds (YouTube, Drive previews) need their own player, so
+ *  we render those as a "Open link" anchor instead of the broken `<video>`
+ *  tag. */
+function isPlayableMediaUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("res.cloudinary.com")) return true;
+    return /\.(mp4|webm|m4v|mov|ogv)(?:\?|$)/i.test(u.pathname);
+  } catch {
+    return false;
+  }
 }
 
 // Slim payment summary tile. Full payment management lives at /contestant/payment.

@@ -7,6 +7,7 @@ import {
   type ContestantRow,
   type ProgressStepRow,
   type SubmissionRow,
+  type SubmissionSlot,
 } from "./db";
 import type { TalentCategoryId } from "@/types";
 
@@ -187,6 +188,8 @@ export interface CreateSubmissionInput {
   height?: number | null;
   supersedesId?: string | null;
   notes?: string | null;
+  /** Defaults to 'main' so legacy callers keep producing competition entries. */
+  slot?: SubmissionSlot;
 }
 
 export async function createSubmission(
@@ -194,14 +197,15 @@ export async function createSubmission(
 ): Promise<SubmissionRow> {
   const id = "sub_" + crypto.randomBytes(8).toString("hex");
   const now = new Date().toISOString();
+  const slot: SubmissionSlot = input.slot ?? "main";
 
   await tx(async ({ q }) => {
     await q(
       `INSERT INTO submissions
          (id, contestant_id, title, category, video_url, thumbnail_url, duration_sec,
           cloudinary_public_id, format, size_bytes, width, height,
-          supersedes_id, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          supersedes_id, notes, slot)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.contestantId,
@@ -217,6 +221,7 @@ export async function createSubmission(
         input.height ?? null,
         input.supersedesId ?? null,
         input.notes ?? null,
+        slot,
       ]
     );
 
@@ -235,18 +240,22 @@ export async function createSubmission(
       );
     }
 
-    // Auto-advance the "video_submitted" step.
-    await q(
-      `UPDATE progress_steps
-         SET done = 1, done_at = ?
-       WHERE contestant_id = ? AND step_key = 'video_submitted' AND done = 0`,
-      [now, input.contestantId]
-    );
-    await q(
-      `UPDATE contestants SET status = 'submitted'
-       WHERE id = ? AND status = 'registered'`,
-      [input.contestantId]
-    );
+    // Only the main slot drives contestant status / progress. Extra videos
+    // are supplementary context for referees, so adding them shouldn't flip
+    // a contestant from `registered` to `submitted` on their own.
+    if (slot === "main") {
+      await q(
+        `UPDATE progress_steps
+           SET done = 1, done_at = ?
+         WHERE contestant_id = ? AND step_key = 'video_submitted' AND done = 0`,
+        [now, input.contestantId]
+      );
+      await q(
+        `UPDATE contestants SET status = 'submitted'
+         WHERE id = ? AND status = 'registered'`,
+        [input.contestantId]
+      );
+    }
   });
 
   return (await queryOne<SubmissionRow>(
@@ -284,15 +293,52 @@ export async function setSubmissionStatus(
   ]);
 }
 
-/** Latest non-superseded submission for a contestant, if any. */
+/**
+ * Latest non-superseded *main* submission for a contestant, if any.
+ *
+ * Public surfaces (profile page, voting card, etc.) show the competition
+ * entry — never an extra. Extras are referee-only context. Callers that
+ * specifically want a non-main slot should use `getLatestSubmissionForSlot`.
+ */
 export async function getLatestSubmissionForContestant(
   contestantId: string
 ): Promise<SubmissionRow | undefined> {
   return queryOne<SubmissionRow>(
     `SELECT * FROM submissions
-      WHERE contestant_id = ? AND status != 'superseded'
+      WHERE contestant_id = ? AND slot = 'main' AND status != 'superseded'
       ORDER BY created_at DESC LIMIT 1`,
     [contestantId]
+  );
+}
+
+/** All non-superseded extras for a contestant, ordered by slot then recency. */
+export async function listExtrasForContestant(
+  contestantId: string
+): Promise<SubmissionRow[]> {
+  return query<SubmissionRow>(
+    `SELECT * FROM submissions
+      WHERE contestant_id = ?
+        AND slot IN ('extra_1','extra_2')
+        AND status != 'superseded'
+      ORDER BY slot ASC, created_at DESC`,
+    [contestantId]
+  );
+}
+
+/**
+ * Latest non-superseded submission for a specific slot. Used by the multi-slot
+ * upload flow so re-uploading the main entry only supersedes the previous
+ * main, leaving extras intact (and vice-versa).
+ */
+export async function getLatestSubmissionForSlot(
+  contestantId: string,
+  slot: SubmissionSlot
+): Promise<SubmissionRow | undefined> {
+  return queryOne<SubmissionRow>(
+    `SELECT * FROM submissions
+      WHERE contestant_id = ? AND slot = ? AND status != 'superseded'
+      ORDER BY created_at DESC LIMIT 1`,
+    [contestantId, slot]
   );
 }
 

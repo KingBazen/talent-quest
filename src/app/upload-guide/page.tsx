@@ -24,7 +24,7 @@ export default function UploadGuidePage() {
           <span className="gradient-text">stage</span>.
         </h1>
         <p className="mt-4 text-muted-foreground text-lg">
-          The Bling Records Show is judged on what referees can hear and see.
+          The Bling Records Talent Show is judged on what referees can hear and see.
           Most contestants film on a phone — and that&apos;s fine. Follow these
           nine checks and your audition will land like a real studio take.
         </p>
@@ -97,7 +97,7 @@ export default function UploadGuidePage() {
           Music-first rules
         </h2>
         <p className="text-muted-foreground mt-2 max-w-2xl">
-          The Bling Records Show is a music competition. These rules sit on
+          The Bling Records Talent Show is a music competition. These rules sit on
           top of the general guidance below.
         </p>
         <ul className="mt-6 grid sm:grid-cols-2 gap-3 text-sm">

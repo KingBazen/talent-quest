@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Mic2, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, Mic2, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLang } from "@/components/i18n/LangProvider";
 import { useSession } from "@/components/auth/SessionProvider";
+import { BlingLogo } from "@/components/brand/BlingLogo";
 
 interface PrimaryCta {
   href: string;
@@ -16,6 +17,14 @@ interface PrimaryCta {
 export function Hero() {
   const { t, lang } = useLang();
   const { user, contestant, latestPayment, loading } = useSession();
+
+  const isContestant = user?.role === "contestant" && Boolean(contestant);
+  const stepDone: [boolean, boolean, boolean] = [
+    Boolean(user),
+    Boolean(isContestant && latestPayment?.status === "succeeded"),
+    false,
+  ];
+  const currentStep = stepDone.findIndex((d) => !d);
 
   // Login-aware primary CTA. Sequence matches the homepage 1/2/3 flow:
   // not signed in → register; signed in but unpaid → pay; signed in & paid → upload.
@@ -41,10 +50,17 @@ export function Hero() {
     };
   })();
 
-  const tagline =
+  const stepLabels: [string, string, string] =
     lang === "am"
-      ? "1️⃣ ይመዝገቡ · 2️⃣ 500 ብር ይክፈሉ · 3️⃣ ቪዲዮዎን ይላኩ"
-      : "1️⃣ Register · 2️⃣ Pay 500 ETB · 3️⃣ Upload your audition";
+      ? ["ይመዝገቡ", "500 ብር ይክፈሉ", "ቪዲዮዎን ይላኩ"]
+      : ["Register", "Pay 500 ETB", "Upload audition"];
+  const stepHrefs: [string, string, string] = [
+    user ? "/contestant/dashboard" : "/register",
+    isContestant ? "/contestant/payment" : "/register",
+    isContestant && latestPayment?.status === "succeeded"
+      ? "/contestant/dashboard"
+      : "/upload-guide",
+  ];
 
   return (
     <section className="relative overflow-hidden">
@@ -62,6 +78,8 @@ export function Hero() {
           transition={{ duration: 0.6 }}
           className="flex flex-col items-center text-center max-w-4xl mx-auto"
         >
+          <BlingLogo variant="stacked" size={108} className="mb-6" />
+
           <Badge
             variant="outline"
             className="mb-6 backdrop-blur-sm bg-background/50"
@@ -98,10 +116,44 @@ export function Hero() {
             </Button>
           </div>
 
-          <p className="mt-8 text-sm font-semibold text-foreground/80">
-            {tagline}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-8 w-full max-w-2xl">
+            <ol className="flex items-stretch justify-between gap-2 rounded-2xl border border-border/60 bg-background/60 backdrop-blur p-2">
+              {stepLabels.map((label, i) => {
+                const done = stepDone[i];
+                const isCurrent = i === currentStep;
+                return (
+                  <li key={label} className="flex-1">
+                    <Link
+                      href={stepHrefs[i]}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors ${
+                        done
+                          ? "bg-emerald-500/10 text-emerald-600"
+                          : isCurrent
+                          ? "bg-brand-500/15 ring-1 ring-brand-500/40 text-foreground"
+                          : "text-muted-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <span
+                        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                          done
+                            ? "bg-emerald-500 text-white"
+                            : isCurrent
+                            ? "bg-gradient-to-br from-brand-400 to-brand-600 text-white"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
+                      </span>
+                      <span className="text-xs sm:text-sm font-semibold leading-tight">
+                        {label}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
             {lang === "am"
               ? "የኢትዮጵያ 12 ታማኝ ባንኮች ተቀባይነት አላቸው · EN / አማርኛ"
               : "Pay by AdmasPay or by uploading a bank receipt · EN / አማርኛ"}
