@@ -82,10 +82,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  themeColor: "#0a0a0a",
   width: "device-width",
   initialScale: 1,
 };
@@ -115,7 +112,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${display.variable}`}
+      className={`${inter.variable} ${display.variable} dark`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background font-sans">
@@ -124,7 +121,7 @@ export default function RootLayout({
           // Inlined by Next so the bot sees it on first paint without JS.
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_SCHEMA) }}
         />
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" forcedTheme="dark" enableSystem={false}>
           <LangProvider>
             <SessionProvider>
               <Navbar />

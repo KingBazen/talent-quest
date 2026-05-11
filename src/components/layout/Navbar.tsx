@@ -6,7 +6,6 @@ import { useState } from "react";
 import { Menu, X, LogOut, Shield, Gavel, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ThemeToggle } from "./ThemeToggle";
 import { LangToggle } from "@/components/i18n/LangToggle";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/components/auth/SessionProvider";
@@ -71,7 +70,6 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-2">
           <LangToggle className="hidden md:inline-flex" />
-          <ThemeToggle />
           {!loading && user ? (
             <>
               {user.role === "admin" && (

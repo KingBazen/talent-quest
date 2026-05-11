@@ -1,7 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Music2, Building2, Users } from "lucide-react";
+import { ArrowRight, Users } from "lucide-react";
+import { BlingLogo } from "@/components/brand/BlingLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -32,9 +34,7 @@ export default function AboutPage() {
 
       <div className="mt-12 grid lg:grid-cols-3 gap-5">
         <div className="rounded-2xl border border-border/60 bg-card p-6">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-700/20 text-brand-500">
-            <Music2 className="h-5 w-5" />
-          </div>
+          <BlingLogo variant="icon" size={56} animated={false} />
           <h2 className="mt-4 font-display text-xl font-bold">Bling Records</h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             The label behind the show — discovering and developing music
@@ -44,8 +44,15 @@ export default function AboutPage() {
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-6">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-700/20 text-brand-500">
-            <Building2 className="h-5 w-5" />
+          <div className="inline-flex h-14 items-center justify-start rounded-xl bg-[radial-gradient(circle_at_30%_25%,#1a1a1a,#050505_70%)] ring-1 ring-inset ring-[rgba(234,179,8,0.25)] px-3 py-2">
+            <Image
+              src="/brand/neo-studios-logo.png"
+              alt="Neo Studios"
+              width={140}
+              height={40}
+              className="h-9 w-auto object-contain brightness-0 invert"
+              priority
+            />
           </div>
           <h2 className="mt-4 font-display text-xl font-bold">Neo Studios</h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
